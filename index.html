@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Financeiro ENS</title>
+<style>
+  :root {
+    --bg: #f6f5f2; --card: #fff; --ink: #1d1f23; --muted: #6b6f76; --line: #e3e1dc;
+    --acc: #1f4e79; --acc-2: #e8eef5; --pos: #1f7a4d; --neg: #b3261e; --warn: #9a6700;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--ink); }
+  header { background: var(--acc); color: #fff; padding: 14px 16px 0; position: sticky; top: 0; z-index: 5; }
+  header h1 { margin: 0 0 10px; font-size: 18px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+  header button.icon { background: none; border: 0; color: #fff; font-size: 20px; padding: 2px 6px; cursor: pointer; }
+  nav { display: flex; gap: 4px; }
+  nav button { flex: 1; background: none; border: 0; color: #cfdbe8; padding: 10px 4px; font: inherit; font-weight: 600; border-bottom: 3px solid transparent; cursor: pointer; }
+  nav button.on { color: #fff; border-bottom-color: #fff; }
+  main { max-width: 720px; margin: 0 auto; padding: 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+  .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+  .kpi .l { font-size: 12px; color: var(--muted); }
+  .kpi .v { font-size: 15px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .kpi.main { grid-column: 1 / -1; }
+  .kpi.main .v { font-size: 26px; }
+  .pos { color: var(--pos); } .neg { color: var(--neg); }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { padding: 7px 4px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  th { font-size: 12px; color: var(--muted); font-weight: 600; }
+  td.n, th.n { text-align: right; white-space: nowrap; }
+  .grid-wrap { overflow-x: auto; }
+  .mes-grid td, .mes-grid th { text-align: center; padding: 6px 3px; font-size: 13px; }
+  .mes-grid td:first-child, .mes-grid th:first-child { text-align: left; white-space: nowrap; }
+  .ok { color: var(--pos); font-weight: 700; } .falta { color: #c9c6bf; }
+  .bar { height: 8px; background: var(--acc-2); border-radius: 4px; overflow: hidden; margin-top: 4px; }
+  .bar > i { display: block; height: 100%; background: var(--acc); }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; font-weight: 600; }
+  input, select, textarea { width: 100%; font: inherit; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); }
+  .row { display: flex; gap: 10px; } .row > * { flex: 1; }
+  .seg { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .seg button { padding: 10px; border: 1px solid var(--line); background: #fff; border-radius: 8px; font: inherit; font-weight: 600; cursor: pointer; color: var(--ink); }
+  .seg button.on { background: var(--acc); color: #fff; border-color: var(--acc); }
+  .btn { display: inline-block; padding: 12px 16px; border-radius: 10px; border: 0; background: var(--acc); color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+  .btn.full { width: 100%; margin-top: 14px; }
+  .btn.sec { background: var(--acc-2); color: var(--acc); }
+  .btn.danger { background: #fbe9e7; color: var(--neg); }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .chip { padding: 6px 10px; border-radius: 16px; border: 1px solid var(--line); background: #fff; font-size: 13px; cursor: pointer; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .lanc { display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+  .lanc:last-child { border-bottom: 0; }
+  .lanc .d { font-size: 12px; color: var(--muted); }
+  .lanc .v { text-align: right; white-space: nowrap; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .lanc .s { font-size: 12px; color: var(--muted); font-weight: 400; }
+  .lanc button { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 13px; padding: 2px 0; text-decoration: underline; }
+  .tag { display: inline-block; font-size: 11px; padding: 1px 6px; border-radius: 8px; background: var(--acc-2); color: var(--acc); margin-left: 4px; vertical-align: 1px; }
+  .mesh { font-size: 13px; font-weight: 700; color: var(--acc); margin: 14px 0 2px; display: flex; justify-content: space-between; }
+  #toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: #1d1f23; color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: 90vw; z-index: 20; }
+  #toast.show { opacity: 1; }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: none; align-items: center; justify-content: center; z-index: 10; padding: 16px; }
+  .modal.show { display: flex; }
+  .modal .card { max-width: 420px; width: 100%; margin: 0; }
+  .hidden { display: none !important; }
+  .err { background: #fbe9e7; color: var(--neg); border-color: #f3c7c1; }
+</style>
+</head>
+<body>
+<header>
+  <h1><span id="titulo">Financeiro ENS</span><button class="icon" id="btnRecarregar" title="Recarregar">⟳</button></h1>
+  <nav>
+    <button data-tab="resumo" class="on">Resumo</button>
+    <button data-tab="lancar">Lançar</button>
+    <button data-tab="lista">Lançamentos</button>
+    <button data-tab="config">Ajustes</button>
+  </nav>
+</header>
+
+<main>
+  <div id="aviso" class="card err hidden"></div>
+
+  <!-- RESUMO -->
+  <section id="tab-resumo">
+    <div class="kpis">
+      <div class="kpi main"><div class="l">Saldo total em caixa</div><div class="v" id="kSaldo">—</div></div>
+      <div class="kpi"><div class="l">Caixa (sem caixinha)</div><div class="v" id="kCaixa">—</div></div>
+      <div class="kpi"><div class="l" id="kCxLabel">Caixinha</div><div class="v" id="kCaixinha">—</div></div>
+      <div class="kpi"><div class="l" id="kMesLabel">Mês atual</div><div class="v" id="kMes">—</div></div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h2 style="display:flex;justify-content:space-between;align-items:center">Contribuições mensais
+        <select id="anoResumo" style="width:auto;padding:4px 8px;font-size:13px"></select></h2>
+      <div class="grid-wrap"><table class="mes-grid" id="gridContrib"></table></div>
+      <p class="muted" id="pendentes"></p>
+    </div>
+    <div class="card">
+      <h2 id="cxTitulo">Caixinha</h2>
+      <div id="cxCasais"></div>
+    </div>
+    <div class="card">
+      <h2>Resumo por mês</h2>
+      <div class="grid-wrap"><table id="tabMeses"></table></div>
+    </div>
+  </section>
+
+  <!-- LANÇAR -->
+  <section id="tab-lancar" class="hidden">
+    <div class="card">
+      <h2 id="formTitulo">Novo lançamento</h2>
+      <div class="seg" id="segTipo">
+        <button data-t="contribuicao" class="on">Contribuição</button>
+        <button data-t="caixinha">Caixinha</button>
+        <button data-t="saida">Saída</button>
+        <button data-t="outros">Outra entrada</button>
+      </div>
+
+      <div id="fCasalBox">
+        <label for="fCasal">Casal</label>
+        <select id="fCasal"></select>
+      </div>
+
+      <div id="fCompBox">
+        <label>Mês(es) de referência</label>
+        <div class="chips" id="fComp"></div>
+      </div>
+
+      <div id="fCatBox" class="hidden">
+        <label for="fCat">Tipo de saída</label>
+        <select id="fCat">
+          <option value="cl">C.L (mensal)</option>
+          <option value="setor">Contribuição Setor / Boleto Equipe 08</option>
+          <option value="despesa">Despesa da equipe</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <div><label for="fData">Data</label><input type="date" id="fData"></div>
+        <div><label for="fValor">Valor (R$)</label><input id="fValor" inputmode="decimal" placeholder="0,00"></div>
+      </div>
+
+      <label for="fDesc">Descrição</label>
+      <input id="fDesc" placeholder="Descrição">
+      <p class="muted" id="fDica" style="margin:6px 0 0"></p>
+
+      <button class="btn full" id="btnSalvar">Salvar lançamento</button>
+      <button class="btn full sec hidden" id="btnCancelarEd">Cancelar edição</button>
+    </div>
+  </section>
+
+  <!-- LISTA -->
+  <section id="tab-lista" class="hidden">
+    <div class="card">
+      <div class="row">
+        <div><label for="filtroMes">Mês</label><select id="filtroMes"></select></div>
+        <div><label for="filtroTxt">Buscar</label><input id="filtroTxt" placeholder="casal, descrição…"></div>
+      </div>
+    </div>
+    <div class="card" id="listaLanc"></div>
+    <div class="card">
+      <h2>Exportar</h2>
+      <p class="muted" style="margin-top:0">Baixa os lançamentos para abrir no Excel.</p>
+      <div class="row">
+        <button class="btn sec" id="btnXlsx">Excel (.xlsx)</button>
+        <button class="btn sec" id="btnCsv">CSV</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONFIG -->
+  <section id="tab-config" class="hidden">
+    <div class="card">
+      <h2>Conexão com o GitHub</h2>
+      <label for="cRepo">Repositório</label>
+      <input id="cRepo" placeholder="usuario/repositorio">
+      <label for="cBranch">Branch</label>
+      <input id="cBranch" placeholder="main">
+      <label for="cToken">Token de acesso (fine-grained)</label>
+      <input id="cToken" type="password" placeholder="github_pat_…" autocomplete="off">
+      <p class="muted">O token fica salvo só neste navegador. Ele precisa de permissão <b>Contents: Read and write</b> apenas neste repositório.</p>
+      <button class="btn full" id="btnConectar">Salvar e conectar</button>
+      <button class="btn full danger" id="btnSair">Esquecer token deste aparelho</button>
+    </div>
+    <div class="card">
+      <h2>Casais e valores</h2>
+      <p class="muted" style="margin-top:0">Os casais, valores de contribuição, a meta da caixinha e o valor do C.L ficam em <code>dados/config.json</code> no repositório.</p>
+      <div id="cfgResumo"></div>
+    </div>
+  </section>
+</main>
+
+<div class="modal" id="modal"><div class="card">
+  <h2 id="mTitulo">Confirmar</h2>
+  <p id="mTexto"></p>
+  <div class="row"><button class="btn sec" id="mNao">Cancelar</button><button class="btn danger" id="mSim">Confirmar</button></div>
+</div></div>
+<div id="toast"></div>
+
+<script>
+(() => {
+  "use strict";
+  const ARQ = "dados/lancamentos.csv";
+  const CFG = "dados/config.json";
+  const CAMPOS = ["id","data","tipo","categoria","casal","competencia","descricao","valor"];
+  const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  const MES_AB = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+  const $ = (id) => document.getElementById(id);
+
+  const st = { lanc: [], sha: null, cfg: null, tipo: "contribuicao", comp: new Set(), editId: null, salvando: false };
+
+  // ---------- armazenamento local ----------
+  const ls = {
+    get(k, d) { try { const v = localStorage.getItem("ensfin." + k); return v == null ? d : v; } catch { return d; } },
+    set(k, v) { try { localStorage.setItem("ensfin." + k, v); } catch {} },
+    del(k) { try { localStorage.removeItem("ensfin." + k); } catch {} }
+  };
+  const conf = () => ({ repo: ls.get("repo", "pascoetto/ens-financeiro"), branch: ls.get("branch", "main"), token: ls.get("token", "") });
+
+  // ---------- util ----------
+  const brl = (n) => (n < 0 ? "−" : "") + "R$ " + Math.abs(n).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const cls = (n) => n < 0 ? "neg" : "";
+  const parseValor = (s) => { s = String(s).trim().replace(/[R$\s]/g, ""); if (s.includes(",")) s = s.replace(/\./g, "").replace(",", "."); const n = Number(s); return isFinite(n) ? Math.round(n * 100) / 100 : NaN; };
+  const fmtData = (iso) => { const [y, m, d] = iso.split("-"); return `${d}/${m}/${y}`; };
+  const hoje = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+  const sinal = (l) => l.tipo === "saida" ? -l.valor : l.valor;
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const toast = (msg, ms = 2500) => { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), ms); };
+  const aviso = (msg) => { const a = $("aviso"); if (!msg) { a.classList.add("hidden"); return; } a.innerHTML = msg; a.classList.remove("hidden"); };
+  const confirmar = (titulo, texto) => new Promise((ok) => {
+    $("mTitulo").textContent = titulo; $("mTexto").textContent = texto; $("modal").classList.add("show");
+    const fim = (v) => { $("modal").classList.remove("show"); $("mSim").onclick = $("mNao").onclick = null; ok(v); };
+    $("mSim").onclick = () => fim(true); $("mNao").onclick = () => fim(false);
+  });
+
+  // ---------- CSV ----------
+  function parseCSV(txt) {
+    const linhas = []; let campo = "", linha = [], q = false;
+    txt = txt.replace(/^﻿/, "");
+    for (let i = 0; i < txt.length; i++) {
+      const c = txt[i];
+      if (q) { if (c === '"') { if (txt[i + 1] === '"') { campo += '"'; i++; } else q = false; } else campo += c; }
+      else if (c === '"') q = true;
+      else if (c === ",") { linha.push(campo); campo = ""; }
+      else if (c === "\n" || c === "\r") { if (c === "\r" && txt[i + 1] === "\n") i++; linha.push(campo); linhas.push(linha); linha = []; campo = ""; }
+      else campo += c;
+    }
+    if (campo !== "" || linha.length) { linha.push(campo); linhas.push(linha); }
+    const cab = linhas.shift() || [];
+    return linhas.filter((l) => l.some((x) => x !== "")).map((l) => {
+      const o = {}; cab.forEach((k, i) => o[k.trim()] = (l[i] ?? "").trim());
+      o.id = Number(o.id); o.valor = Number(o.valor); return o;
+    });
+  }
+  const csvCampo = (v) => { v = String(v ?? ""); return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  const toCSV = (rows) => CAMPOS.join(",") + "\n" + rows.map((r) => CAMPOS.map((k) => csvCampo(k === "valor" ? r.valor.toFixed(2) : r[k])).join(",")).join("\n") + "\n";
+  const ordenar = (rows) => rows.sort((a, b) => a.data < b.data ? -1 : a.data > b.data ? 1 : a.id - b.id);
+
+  // ---------- GitHub ----------
+  const b64dec = (b) => new TextDecoder().decode(Uint8Array.from(atob(b.replace(/\s/g, "")), (c) => c.charCodeAt(0)));
+  const b64enc = (s) => { const by = new TextEncoder().encode(s); let bin = ""; for (let i = 0; i < by.length; i += 0x8000) bin += String.fromCharCode.apply(null, by.subarray(i, i + 0x8000)); return btoa(bin); };
+  async function gh(caminho, opts = {}) {
+    const c = conf();
+    const r = await fetch(`https://api.github.com/repos/${c.repo}/contents/${caminho}` + (opts.method ? "" : `?ref=${encodeURIComponent(c.branch)}&t=${Date.now()}`), {
+      method: opts.method || "GET",
+      headers: { Authorization: `Bearer ${c.token}`, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", ...(opts.body ? { "Content-Type": "application/json" } : {}) },
+      body: opts.body ? JSON.stringify(opts.body) : undefined, cache: "no-store"
+    });
+    if (!r.ok) { const e = new Error(`GitHub ${r.status}`); e.status = r.status; try { e.det = (await r.json()).message; } catch {} throw e; }
+    return r.json();
+  }
+  async function baixarArquivo(caminho) {
+    const j = await gh(caminho);
+    if (j.content && j.encoding === "base64") return { txt: b64dec(j.content), sha: j.sha };
+    // arquivos grandes (>1 MB) vêm sem conteúdo: usa o blob
+    const c = conf();
+    const r = await fetch(`https://api.github.com/repos/${c.repo}/git/blobs/${j.sha}`, { headers: { Authorization: `Bearer ${c.token}`, Accept: "application/vnd.github+json" } });
+    const b = await r.json(); return { txt: b64dec(b.content), sha: j.sha };
+  }
+  async function carregar() {
+    const c = conf();
+    if (!c.token) { aviso("Configure o token em <b>Ajustes</b> para carregar os dados."); mostrarTab("config"); return false; }
+    aviso("");
+    try {
+      const [l, f] = await Promise.all([baixarArquivo(ARQ), baixarArquivo(CFG)]);
+      st.lanc = ordenar(parseCSV(l.txt)); st.sha = l.sha; st.cfg = JSON.parse(f.txt);
+      renderTudo(); return true;
+    } catch (e) {
+      const m = e.status === 401 ? "Token inválido ou expirado." : e.status === 404 ? "Repositório ou arquivo não encontrado (confira o nome do repositório e se o token tem acesso a ele)." : "Não foi possível carregar: " + (e.det || e.message);
+      aviso(m + " Veja em <b>Ajustes</b>."); return false;
+    }
+  }
+  // aplica uma alteração e grava; em caso de conflito, recarrega e reaplica
+  async function gravar(alterar, msg) {
+    if (st.salvando) return false;
+    st.salvando = true; $("btnSalvar").disabled = true;
+    try {
+      for (let tentativa = 0; tentativa < 3; tentativa++) {
+        const nova = ordenar(alterar(st.lanc.map((x) => ({ ...x }))));
+        try {
+          const r = await gh(ARQ, { method: "PUT", body: { message: msg, content: b64enc(toCSV(nova)), sha: st.sha, branch: conf().branch } });
+          st.lanc = nova; st.sha = r.content.sha; renderTudo(); return true;
+        } catch (e) {
+          if (e.status === 409 || e.status === 422) { const l = await baixarArquivo(ARQ); st.lanc = ordenar(parseCSV(l.txt)); st.sha = l.sha; continue; }
+          throw e;
+        }
+      }
+      throw new Error("conflito ao gravar, tente de novo");
+    } catch (e) {
+      toast("Erro ao salvar: " + (e.det || e.message), 4000); return false;
+    } finally { st.salvando = false; $("btnSalvar").disabled = false; }
+  }
+
+  // ---------- cálculos ----------
+  const casais = () => (st.cfg?.casais || []);
+  const anos = () => [...new Set(st.lanc.map((l) => l.data.slice(0, 4)))].sort().reverse();
+  const contribuiu = (casal, ym) => st.lanc.some((l) => l.categoria === "contribuicao" && l.casal === casal && (l.competencia || "").split(";").includes(ym));
+
+  // ---------- render ----------
+  function renderTudo() {
+    $("titulo").textContent = "Financeiro " + (st.cfg?.equipe || "ENS");
+    renderResumo(); renderForm(); renderLista(); renderCfg();
+  }
+
+  function renderResumo() {
+    const saldo = st.lanc.reduce((s, l) => s + sinal(l), 0);
+    const anoAtual = hoje().slice(0, 4), ymAtual = hoje().slice(0, 7);
+    const cx = st.lanc.filter((l) => l.tipo === "caixinha" && l.data.startsWith(anoAtual)).reduce((s, l) => s + l.valor, 0);
+    const cxTotal = st.lanc.filter((l) => l.tipo === "caixinha").reduce((s, l) => s + l.valor, 0);
+    const mes = st.lanc.filter((l) => l.data.startsWith(ymAtual)).reduce((s, l) => s + sinal(l), 0);
+    const rot = st.cfg?.caixinha?.rotulo || "Caixinha";
+    $("kSaldo").textContent = brl(saldo); $("kSaldo").className = "v " + cls(saldo);
+    $("kCaixa").textContent = brl(saldo - cxTotal); $("kCaixa").className = "v " + cls(saldo - cxTotal);
+    $("kCxLabel").textContent = rot; $("kCaixinha").textContent = brl(cx);
+    $("kMesLabel").textContent = "Movimento " + MES_AB[Number(ymAtual.slice(5)) - 1];
+    $("kMes").textContent = brl(mes); $("kMes").className = "v " + (mes < 0 ? "neg" : "pos");
+
+    const sel = $("anoResumo"), cur = sel.value || anoAtual;
+    const lista = anos().includes(anoAtual) ? anos() : [anoAtual, ...anos()];
+    sel.innerHTML = lista.map((a) => `<option ${a === cur ? "selected" : ""}>${a}</option>`).join("");
+    const ano = sel.value;
+    const ultimoMes = ano < anoAtual ? 12 : Number(ymAtual.slice(5));
+    let h = "<tr><th>Casal</th>" + MES_AB.map((m) => `<th>${m}</th>`).join("") + "</tr>";
+    const pend = [];
+    for (const c of casais()) {
+      h += `<tr><td>${esc(c.nome.replace(/ e /, "/").replace("Ana Maria", "Ana"))}</td>`;
+      for (let m = 1; m <= 12; m++) {
+        const ym = `${ano}-${String(m).padStart(2, "0")}`, ok = contribuiu(c.nome, ym);
+        if (!ok && ano === anoAtual && m === ultimoMes) pend.push(c.nome);
+        h += `<td class="${ok ? "ok" : "falta"}">${ok ? "✓" : (m <= ultimoMes ? "·" : "")}</td>`;
+      }
+      h += "</tr>";
+    }
+    $("gridContrib").innerHTML = h;
+    $("pendentes").textContent = ano === anoAtual ? (pend.length ? `Faltam em ${MESES[ultimoMes - 1]}: ${pend.join(", ")}.` : `Todos contribuíram em ${MESES[ultimoMes - 1]}.`) : "";
+
+    const meta = Number(st.cfg?.caixinha?.meta || 0);
+    $("cxTitulo").textContent = `${rot} · arrecadado em ${anoAtual}` + (meta ? ` · meta ${brl(meta)}/casal` : "");
+    $("cxCasais").innerHTML = casais().map((c) => {
+      const v = st.lanc.filter((l) => l.tipo === "caixinha" && l.casal === c.nome && l.data.startsWith(anoAtual)).reduce((s, l) => s + l.valor, 0);
+      const p = meta ? Math.min(100, (v / meta) * 100) : 0;
+      return `<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between"><span>${esc(c.nome)}</span><span class="${v >= meta && meta ? "ok" : ""}">${brl(v)}${meta ? (v >= meta ? " ✓" : ` · faltam ${brl(meta - v)}`) : ""}</span></div>${meta ? `<div class="bar"><i style="width:${p}%"></i></div>` : ""}</div>`;
+    }).join("") + `<div class="muted">Total: <b>${brl(cx)}</b>${meta ? ` de ${brl(meta * casais().length)}` : ""}</div>`;
+
+    // resumo mensal do ano selecionado
+    let saldoAcum = st.lanc.filter((l) => l.data < `${ano}-01-01`).reduce((s, l) => s + sinal(l), 0);
+    let t = '<tr><th>Mês</th><th class="n">Entradas</th><th class="n">Saídas</th><th class="n">Saldo</th></tr>';
+    for (let m = 1; m <= 12; m++) {
+      const ym = `${ano}-${String(m).padStart(2, "0")}`, ls_ = st.lanc.filter((l) => l.data.startsWith(ym));
+      if (!ls_.length) continue;
+      const ent = ls_.filter((l) => l.tipo !== "saida").reduce((s, l) => s + l.valor, 0);
+      const sai = ls_.filter((l) => l.tipo === "saida").reduce((s, l) => s + l.valor, 0);
+      saldoAcum += ent - sai;
+      t += `<tr><td>${MES_AB[m - 1]}</td><td class="n pos">${brl(ent)}</td><td class="n neg">${brl(sai)}</td><td class="n ${cls(saldoAcum)}">${brl(saldoAcum)}</td></tr>`;
+    }
+    $("tabMeses").innerHTML = t;
+  }
+
+  // ---------- formulário ----------
+  function opcoesComp() {
+    // últimos 4 meses e próximos 2, a partir da data do lançamento
+    const base = ($("fData").value || hoje()).slice(0, 7); const [y, m] = base.split("-").map(Number);
+    const out = []; for (let k = -4; k <= 2; k++) { const d = new Date(y, m - 1 + k, 1); out.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`); }
+    return out;
+  }
+  const rotComp = (ym) => `${MES_AB[Number(ym.slice(5)) - 1]}/${ym.slice(0, 4)}`;
+  function descAuto() {
+    const casal = $("fCasal").value, t = st.tipo;
+    if (t === "contribuicao") {
+      const ms = [...st.comp].sort(); if (!ms.length) return "";
+      const anoC = ms[ms.length - 1].slice(0, 4);
+      return `Contribuição ${ms.map((x) => MES_AB[Number(x.slice(5)) - 1]).join("/")}/${anoC} - ${casal}`;
+    }
+    if (t === "caixinha") return `Caixinha - ${casal}`;
+    if (t === "saida") {
+      const d = $("fData").value || hoje(), mes = `${MESES[Number(d.slice(5, 7)) - 1]}/${d.slice(0, 4)}`;
+      if ($("fCat").value === "cl") return `C.L - ${mes}`;
+      if ($("fCat").value === "setor") return `Boleto Contr. Equipe.08 - ${mes}`;
+    }
+    return null;
+  }
+  function valorAuto() {
+    if (st.tipo === "contribuicao") { const c = casais().find((x) => x.nome === $("fCasal").value); return c ? c.contribuicao * Math.max(1, st.comp.size) : ""; }
+    if (st.tipo === "saida" && $("fCat").value === "cl") return st.cfg?.valores?.cl ?? "";
+    return null;
+  }
+  function atualizarAuto(forcar) {
+    const d = descAuto(); if (d !== null && (forcar || $("fDesc").dataset.auto === "1" || !$("fDesc").value)) { $("fDesc").value = d; $("fDesc").dataset.auto = "1"; }
+    const v = valorAuto(); if (v !== null && v !== "" && (forcar || $("fValor").dataset.auto === "1" || !$("fValor").value)) { $("fValor").value = Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2 }); $("fValor").dataset.auto = "1"; }
+    let dica = "";
+    if (st.tipo === "contribuicao") {
+      const ja = [...st.comp].filter((ym) => contribuiu($("fCasal").value, ym) && !(st.editId && st.lanc.find((l) => l.id === st.editId)?.competencia.split(";").includes(ym)));
+      if (ja.length) dica = `⚠ ${$("fCasal").value} já tem contribuição lançada em ${ja.map(rotComp).join(", ")}.`;
+    }
+    $("fDica").textContent = dica;
+  }
+  function renderComp() {
+    const ops = opcoesComp(); for (const x of st.comp) if (!ops.includes(x)) ops.push(x); ops.sort();
+    $("fComp").innerHTML = ops.map((ym) => `<span class="chip" data-ym="${ym}" style="${st.comp.has(ym) ? "background:var(--acc);color:#fff;border-color:var(--acc)" : ""}">${rotComp(ym)}</span>`).join("");
+  }
+  function setTipo(t) {
+    st.tipo = t;
+    document.querySelectorAll("#segTipo button").forEach((b) => b.classList.toggle("on", b.dataset.t === t));
+    $("fCasalBox").classList.toggle("hidden", t === "saida");
+    $("fCompBox").classList.toggle("hidden", t !== "contribuicao");
+    $("fCatBox").classList.toggle("hidden", t !== "saida");
+    $("fCasal").querySelector('option[value=""]').hidden = t !== "outros";
+    if (t !== "outros" && !$("fCasal").value) $("fCasal").selectedIndex = 1;
+    if (t === "outros") $("fCasal").value = "";
+    $("fDesc").dataset.auto = "1"; $("fValor").dataset.auto = "1";
+    if (["caixinha", "outros"].includes(t) || (t === "saida" && $("fCat").value === "despesa")) { $("fValor").value = ""; }
+    if (t === "outros" || (t === "saida" && $("fCat").value === "despesa")) { $("fDesc").value = ""; }
+    renderComp(); atualizarAuto(true);
+  }
+  function limparForm() {
+    st.editId = null; $("formTitulo").textContent = "Novo lançamento"; $("btnSalvar").textContent = "Salvar lançamento"; $("btnCancelarEd").classList.add("hidden");
+    $("fData").value = hoje(); st.comp = new Set([hoje().slice(0, 7)]); $("fValor").value = ""; $("fDesc").value = "";
+    setTipo(st.tipo);
+  }
+  function renderForm() {
+    const atual = $("fCasal").value;
+    $("fCasal").innerHTML = '<option value="">(nenhum)</option>' + casais().map((c) => `<option ${c.nome === atual ? "selected" : ""}>${esc(c.nome)}</option>`).join("");
+    if (!st.editId) { if (!$("fData").value) $("fData").value = hoje(); if (!st.comp.size) st.comp.add(hoje().slice(0, 7)); setTipo(st.tipo); }
+  }
+  function editar(id) {
+    const l = st.lanc.find((x) => x.id === id); if (!l) return;
+    const t = l.tipo === "entrada" ? (l.categoria === "contribuicao" ? "contribuicao" : "outros") : l.tipo;
+    st.editId = id; st.comp = new Set((l.competencia || "").split(";").filter(Boolean));
+    $("fData").value = l.data; if (t === "saida") $("fCat").value = l.categoria;
+    setTipo(t); $("fCasal").value = l.casal;
+    $("fDesc").value = l.descricao; $("fDesc").dataset.auto = "0";
+    $("fValor").value = l.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 }); $("fValor").dataset.auto = "0";
+    $("formTitulo").textContent = "Editar lançamento"; $("btnSalvar").textContent = "Salvar alterações"; $("btnCancelarEd").classList.remove("hidden");
+    atualizarAuto(false); mostrarTab("lancar");
+  }
+  async function salvar() {
+    const t = st.tipo, data = $("fData").value, valor = parseValor($("fValor").value), desc = $("fDesc").value.trim(), casal = t === "saida" ? "" : $("fCasal").value;
+    if (!data) return toast("Informe a data.");
+    if (!(valor > 0)) return toast("Informe um valor maior que zero.");
+    if (!desc) return toast("Informe a descrição.");
+    if ((t === "contribuicao" || t === "caixinha") && !casal) return toast("Escolha o casal.");
+    if (t === "contribuicao" && !st.comp.size) return toast("Escolha o mês de referência.");
+    const reg = {
+      data, valor, descricao: desc, casal,
+      tipo: t === "contribuicao" || t === "outros" ? "entrada" : t,
+      categoria: t === "saida" ? $("fCat").value : t,
+      competencia: t === "contribuicao" ? [...st.comp].sort().join(";") : ""
+    };
+    const editId = st.editId;
+    const ok = await gravar((rows) => {
+      if (editId) { const i = rows.findIndex((r) => r.id === editId); if (i >= 0) rows[i] = { ...rows[i], ...reg }; else throw new Error("lançamento não encontrado"); }
+      else rows.push({ id: rows.reduce((m, r) => Math.max(m, r.id), 0) + 1, ...reg });
+      return rows;
+    }, (editId ? "Edita: " : "Lança: ") + `${desc} (${brl(t === "saida" ? -valor : valor)})`);
+    if (ok) { toast(editId ? "Alteração salva ✓" : "Lançamento salvo ✓"); limparForm(); if (editId) mostrarTab("lista"); }
+  }
+
+  // ---------- lista ----------
+  function renderLista() {
+    const sel = $("filtroMes"), cur = sel.value || hoje().slice(0, 7);
+    const meses = [...new Set(st.lanc.map((l) => l.data.slice(0, 7)))].sort().reverse();
+    sel.innerHTML = '<option value="">Todos</option>' + meses.map((m) => `<option value="${m}" ${m === cur ? "selected" : ""}>${MESES[Number(m.slice(5)) - 1]}/${m.slice(0, 4)}</option>`).join("");
+    const mes = sel.value, txt = $("filtroTxt").value.trim().toLowerCase();
+    let acum = 0; const saldoApos = new Map();
+    for (const l of st.lanc) { acum += sinal(l); saldoApos.set(l.id, acum); }
+    const rows = st.lanc.filter((l) => (!mes || l.data.startsWith(mes)) && (!txt || (l.descricao + " " + l.casal).toLowerCase().includes(txt))).slice().reverse();
+    if (!rows.length) { $("listaLanc").innerHTML = '<p class="muted" style="margin:0">Nenhum lançamento.</p>'; return; }
+    let h = "", mesAtual = "";
+    for (const l of rows) {
+      const m = l.data.slice(0, 7);
+      if (m !== mesAtual) {
+        mesAtual = m; const tot = rows.filter((x) => x.data.startsWith(m)).reduce((s, x) => s + sinal(x), 0);
+        h += `<div class="mesh"><span>${MESES[Number(m.slice(5)) - 1]}/${m.slice(0, 4)}</span><span class="${tot < 0 ? "neg" : "pos"}">${brl(tot)}</span></div>`;
+      }
+      const v = sinal(l), tag = l.tipo === "caixinha" ? '<span class="tag">caixinha</span>' : "";
+      h += `<div class="lanc"><div><div>${esc(l.descricao)}${tag}</div><div class="d">${fmtData(l.data)} · <button data-ed="${l.id}">editar</button> · <button data-del="${l.id}">excluir</button></div></div>
+            <div class="v ${v < 0 ? "neg" : "pos"}">${brl(v)}<div class="s">saldo ${brl(saldoApos.get(l.id))}</div></div></div>`;
+    }
+    $("listaLanc").innerHTML = h;
+  }
+  async function excluir(id) {
+    const l = st.lanc.find((x) => x.id === id); if (!l) return;
+    if (!(await confirmar("Excluir lançamento?", `${l.descricao} — ${brl(sinal(l))} em ${fmtData(l.data)}`))) return;
+    if (await gravar((rows) => rows.filter((r) => r.id !== id), `Exclui: ${l.descricao} (${brl(sinal(l))})`)) toast("Lançamento excluído");
+  }
+
+  // ---------- exportar ----------
+  function baixar(nome, blob) { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nome; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); }
+  function exportarCSV() { baixar(`ENS_financeiro_${hoje()}.csv`, new Blob(["﻿" + toCSV(st.lanc)], { type: "text/csv;charset=utf-8" })); }
+  async function exportarXLSX() {
+    if (!window.XLSX) {
+      toast("Preparando Excel…");
+      try { await new Promise((ok, err) => { const s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"; s.onload = ok; s.onerror = err; document.head.appendChild(s); }); }
+      catch { return toast("Não consegui carregar o gerador de Excel. Use o CSV."); }
+    }
+    let acum = 0;
+    const linhas = st.lanc.map((l) => { acum += sinal(l); return {
+      "Descrição": l.descricao, "Data": new Date(l.data + "T12:00:00"), "Casal": l.casal,
+      "Caixinha": l.tipo === "caixinha" ? l.valor : null, "Entrada": l.tipo === "entrada" ? l.valor : null,
+      "Saída": l.tipo === "saida" ? -l.valor : null, "Saldo": Math.round(acum * 100) / 100 }; });
+    const ws = XLSX.utils.json_to_sheet(linhas, { cellDates: true });
+    ws["!cols"] = [{ wch: 48 }, { wch: 11 }, { wch: 20 }, { wch: 11 }, { wch: 11 }, { wch: 11 }, { wch: 12 }];
+    const rng = XLSX.utils.decode_range(ws["!ref"]);
+    for (let r = 1; r <= rng.e.r; r++) {
+      const d = ws[XLSX.utils.encode_cell({ r, c: 1 })]; if (d) d.z = "dd/mm/yyyy";
+      for (let c = 3; c <= 6; c++) { const x = ws[XLSX.utils.encode_cell({ r, c })]; if (x) x.z = '"R$" #,##0.00;[Red]-"R$" #,##0.00'; }
+    }
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Lançamentos");
+    XLSX.writeFile(wb, `ENS_financeiro_${hoje()}.xlsx`);
+  }
+
+  // ---------- ajustes ----------
+  function renderCfg() {
+    if (!st.cfg) return;
+    $("cfgResumo").innerHTML = '<table><tr><th>Casal</th><th class="n">Contribuição</th></tr>' +
+      casais().map((c) => `<tr><td>${esc(c.nome)}</td><td class="n">${brl(c.contribuicao)}</td></tr>`).join("") +
+      `<tr><td>${esc(st.cfg.caixinha?.rotulo || "Caixinha")} (meta por casal)</td><td class="n">${brl(st.cfg.caixinha?.meta || 0)}</td></tr>` +
+      `<tr><td>C.L mensal</td><td class="n">${brl(st.cfg.valores?.cl || 0)}</td></tr></table>`;
+  }
+
+  // ---------- navegação ----------
+  function mostrarTab(t) {
+    document.querySelectorAll("nav button").forEach((b) => b.classList.toggle("on", b.dataset.tab === t));
+    document.querySelectorAll("main > section").forEach((s) => s.classList.toggle("hidden", s.id !== "tab-" + t));
+    window.scrollTo(0, 0);
+  }
+
+  // ---------- eventos ----------
+  document.querySelectorAll("nav button").forEach((b) => b.onclick = () => mostrarTab(b.dataset.tab));
+  $("segTipo").onclick = (e) => { const b = e.target.closest("button"); if (b) setTipo(b.dataset.t); };
+  $("fComp").onclick = (e) => { const c = e.target.closest(".chip"); if (!c) return; const ym = c.dataset.ym; st.comp.has(ym) ? st.comp.delete(ym) : st.comp.add(ym); renderComp(); atualizarAuto(false); };
+  $("fCasal").onchange = () => atualizarAuto(false);
+  $("fCat").onchange = () => { if ($("fCat").value === "despesa") { if ($("fDesc").dataset.auto === "1") $("fDesc").value = ""; if ($("fValor").dataset.auto === "1") $("fValor").value = ""; } atualizarAuto(false); };
+  $("fData").onchange = () => { renderComp(); atualizarAuto(false); };
+  $("fDesc").oninput = () => $("fDesc").dataset.auto = "0";
+  $("fValor").oninput = () => $("fValor").dataset.auto = "0";
+  $("btnSalvar").onclick = salvar;
+  $("btnCancelarEd").onclick = () => { limparForm(); mostrarTab("lista"); };
+  $("filtroMes").onchange = renderLista;
+  $("filtroTxt").oninput = renderLista;
+  $("listaLanc").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; if (b.dataset.ed) editar(Number(b.dataset.ed)); if (b.dataset.del) excluir(Number(b.dataset.del)); };
+  $("anoResumo").onchange = renderResumo;
+  $("btnCsv").onclick = exportarCSV;
+  $("btnXlsx").onclick = exportarXLSX;
+  $("btnRecarregar").onclick = async () => { if (await carregar()) toast("Dados atualizados"); };
+  $("btnConectar").onclick = async () => {
+    ls.set("repo", $("cRepo").value.trim() || "pascoetto/ens-financeiro"); ls.set("branch", $("cBranch").value.trim() || "main");
+    if ($("cToken").value.trim()) ls.set("token", $("cToken").value.trim());
+    if (await carregar()) { toast("Conectado ✓"); mostrarTab("resumo"); }
+  };
+  $("btnSair").onclick = async () => { if (await confirmar("Esquecer token?", "Você vai precisar colar o token de novo para usar neste aparelho.")) { ls.del("token"); $("cToken").value = ""; toast("Token removido deste aparelho"); } };
+
+  // ---------- início ----------
+  const c = conf(); $("cRepo").value = c.repo; $("cBranch").value = c.branch; $("cToken").value = c.token;
+  carregar();
+})();
+</script>
+</body>
+</html>
