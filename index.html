@@ -184,9 +184,26 @@
       <button class="btn full danger" id="btnSair">Esquecer token deste aparelho</button>
     </div>
     <div class="card">
-      <h2>Casais e valores</h2>
-      <p class="muted" style="margin-top:0">Os casais, valores de contribuição, a meta da caixinha e o valor do C.L ficam em <code>dados/config.json</code> no repositório.</p>
-      <div id="cfgResumo"></div>
+      <h2>Meta da caixinha e C.L por ano</h2>
+      <div id="cfgAnos"></div>
+      <div id="anoForm" style="margin-top:6px">
+        <div class="row">
+          <div><label for="aAno">Ano</label><input id="aAno" inputmode="numeric" maxlength="4" placeholder="2027"></div>
+          <div><label for="aMeta">Meta/casal</label><input id="aMeta" inputmode="decimal" placeholder="0,00"></div>
+          <div><label for="aCl">C.L mensal</label><input id="aCl" inputmode="decimal" placeholder="0,00"></div>
+        </div>
+        <p class="muted" id="aDica" style="margin:6px 0 0">A caixinha arrecadada num ano é a do ano seguinte (em 2026 arrecada-se a Caixinha 2027).</p>
+        <button class="btn full" id="btnSalvarAno">Salvar ano</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Casais da equipe</h2>
+      <div id="cfgCasais"></div>
+      <div class="row" style="margin-top:10px;align-items:flex-end">
+        <div style="flex:3"><label for="nCasal">Novo casal</label><input id="nCasal" placeholder="Ex.: Maria e José"></div>
+        <div style="flex:1"><button class="btn sec" id="btnAddCasal" style="width:100%">Adicionar</button></div>
+      </div>
+      <p class="muted">Remover um casal só tira ele das listas; os lançamentos antigos continuam.</p>
     </div>
   </section>
 </main>
@@ -284,7 +301,7 @@
     aviso("");
     try {
       const [l, f] = await Promise.all([baixarArquivo(ARQ), baixarArquivo(CFG)]);
-      st.lanc = ordenar(parseCSV(l.txt)); st.sha = l.sha; st.cfg = JSON.parse(f.txt);
+      st.lanc = ordenar(parseCSV(l.txt)); st.sha = l.sha; st.cfg = normCfg(JSON.parse(f.txt)); st.cfgSha = f.sha;
       renderTudo(); return true;
     } catch (e) {
       const m = e.status === 401 ? "Token inválido ou expirado." : e.status === 404 ? "Repositório ou arquivo não encontrado (confira o nome do repositório e se o token tem acesso a ele)." : "Não foi possível carregar: " + (e.det || e.message);
@@ -314,6 +331,39 @@
 
   // ---------- cálculos ----------
   const casais = () => (st.cfg?.casais || []);
+  // aceita o formato antigo do config (caixinha/valores únicos) e converte para "anos"
+  function normCfg(c) {
+    c = c || {};
+    c.casais = (c.casais || []).map((x) => typeof x === "string" ? { nome: x } : { nome: x.nome });
+    if (!c.anos) {
+      c.anos = {};
+      if (c.caixinha || c.valores) c.anos[hoje().slice(0, 4)] = { meta_caixinha: Number(c.caixinha?.meta || 0), cl: Number(c.valores?.cl || 0) };
+    }
+    delete c.caixinha; delete c.valores;
+    return c;
+  }
+  // valores do ano; se o ano não foi cadastrado, usa o último ano anterior cadastrado
+  function cfgAno(ano) {
+    const a = st.cfg?.anos || {}; ano = String(ano);
+    if (a[ano]) return { ...a[ano], cadastrado: true };
+    const ant = Object.keys(a).filter((k) => k < ano).sort().pop();
+    return ant ? { ...a[ant], cadastrado: false, de: ant } : { meta_caixinha: 0, cl: 0, cadastrado: false };
+  }
+  const rotCx = (ano) => `Caixinha ${Number(ano) + 1}`;
+  const ultimaContrib = (casal) => { for (let i = st.lanc.length - 1; i >= 0; i--) { const l = st.lanc[i]; if (l.categoria === "contribuicao" && l.casal === casal) return l.valor / Math.max(1, (l.competencia || "").split(";").filter(Boolean).length); } return null; };
+  async function gravarCfg(alterar, msg) {
+    for (let t = 0; t < 3; t++) {
+      const novo = alterar(JSON.parse(JSON.stringify(st.cfg)));
+      try {
+        const r = await gh(CFG, { method: "PUT", body: { message: msg, content: b64enc(JSON.stringify(novo, null, 2) + "\n"), sha: st.cfgSha, branch: conf().branch } });
+        st.cfg = novo; st.cfgSha = r.content.sha; renderTudo(); return true;
+      } catch (e) {
+        if (e.status === 409 || e.status === 422) { const f = await baixarArquivo(CFG); st.cfg = normCfg(JSON.parse(f.txt)); st.cfgSha = f.sha; continue; }
+        toast("Erro ao salvar: " + (e.det || e.message), 4000); return false;
+      }
+    }
+    toast("Conflito ao salvar, tente de novo"); return false;
+  }
   const anos = () => [...new Set(st.lanc.map((l) => l.data.slice(0, 4)))].sort().reverse();
   const contribuiu = (casal, ym) => st.lanc.some((l) => l.categoria === "contribuicao" && l.casal === casal && (l.competencia || "").split(";").includes(ym));
 
@@ -329,7 +379,7 @@
     const cx = st.lanc.filter((l) => l.tipo === "caixinha" && l.data.startsWith(anoAtual)).reduce((s, l) => s + l.valor, 0);
     const cxTotal = st.lanc.filter((l) => l.tipo === "caixinha").reduce((s, l) => s + l.valor, 0);
     const mes = st.lanc.filter((l) => l.data.startsWith(ymAtual)).reduce((s, l) => s + sinal(l), 0);
-    const rot = st.cfg?.caixinha?.rotulo || "Caixinha";
+    const rot = rotCx(anoAtual);
     $("kSaldo").textContent = brl(saldo); $("kSaldo").className = "v " + cls(saldo);
     $("kCaixa").textContent = brl(saldo - cxTotal); $("kCaixa").className = "v " + cls(saldo - cxTotal);
     $("kCxLabel").textContent = rot; $("kCaixinha").textContent = brl(cx);
@@ -355,13 +405,14 @@
     $("gridContrib").innerHTML = h;
     $("pendentes").textContent = ano === anoAtual ? (pend.length ? `Faltam em ${MESES[ultimoMes - 1]}: ${pend.join(", ")}.` : `Todos contribuíram em ${MESES[ultimoMes - 1]}.`) : "";
 
-    const meta = Number(st.cfg?.caixinha?.meta || 0);
-    $("cxTitulo").textContent = `${rot} · arrecadado em ${anoAtual}` + (meta ? ` · meta ${brl(meta)}/casal` : "");
-    $("cxCasais").innerHTML = casais().map((c) => {
-      const v = st.lanc.filter((l) => l.tipo === "caixinha" && l.casal === c.nome && l.data.startsWith(anoAtual)).reduce((s, l) => s + l.valor, 0);
+    const ca = cfgAno(ano), meta = Number(ca.meta_caixinha || 0);
+    const cxAno = st.lanc.filter((l) => l.tipo === "caixinha" && l.data.startsWith(ano)).reduce((s, l) => s + l.valor, 0);
+    $("cxTitulo").textContent = `${rotCx(ano)} · arrecadada em ${ano}` + (meta ? ` · meta ${brl(meta)}/casal` : "");
+    $("cxCasais").innerHTML = (!ca.cadastrado ? `<p class="muted" style="margin-top:0">Meta de ${ano} não cadastrada${ca.de ? ` (usando a de ${ca.de})` : ""}. Cadastre em Ajustes.</p>` : "") + casais().map((c) => {
+      const v = st.lanc.filter((l) => l.tipo === "caixinha" && l.casal === c.nome && l.data.startsWith(ano)).reduce((s, l) => s + l.valor, 0);
       const p = meta ? Math.min(100, (v / meta) * 100) : 0;
       return `<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between"><span>${esc(c.nome)}</span><span class="${v >= meta && meta ? "ok" : ""}">${brl(v)}${meta ? (v >= meta ? " ✓" : ` · faltam ${brl(meta - v)}`) : ""}</span></div>${meta ? `<div class="bar"><i style="width:${p}%"></i></div>` : ""}</div>`;
-    }).join("") + `<div class="muted">Total: <b>${brl(cx)}</b>${meta ? ` de ${brl(meta * casais().length)}` : ""}</div>`;
+    }).join("") + `<div class="muted">Total: <b>${brl(cxAno)}</b>${meta ? ` de ${brl(meta * casais().length)}` : ""}</div>`;
 
     // resumo mensal do ano selecionado
     let saldoAcum = st.lanc.filter((l) => l.data < `${ano}-01-01`).reduce((s, l) => s + sinal(l), 0);
@@ -401,8 +452,7 @@
     return null;
   }
   function valorAuto() {
-    if (st.tipo === "contribuicao") { const c = casais().find((x) => x.nome === $("fCasal").value); return c ? c.contribuicao * Math.max(1, st.comp.size) : ""; }
-    if (st.tipo === "saida" && $("fCat").value === "cl") return st.cfg?.valores?.cl ?? "";
+    if (st.tipo === "saida" && $("fCat").value === "cl") return cfgAno(($("fData").value || hoje()).slice(0, 4)).cl || "";
     return null;
   }
   function atualizarAuto(forcar) {
@@ -411,9 +461,15 @@
     let dica = "";
     if (st.tipo === "contribuicao") {
       const ja = [...st.comp].filter((ym) => contribuiu($("fCasal").value, ym) && !(st.editId && st.lanc.find((l) => l.id === st.editId)?.competencia.split(";").includes(ym)));
-      if (ja.length) dica = `⚠ ${$("fCasal").value} já tem contribuição lançada em ${ja.map(rotComp).join(", ")}.`;
+      const u = ultimaContrib($("fCasal").value);
+      if (u != null && !st.editId) { const tot = u * Math.max(1, st.comp.size); dica += `<span class="chip" id="usarUltimo" data-v="${tot}">Último valor: ${brl(u)}${st.comp.size > 1 ? ` × ${st.comp.size} = ${brl(tot)}` : ""} · usar</span> `; }
+      if (ja.length) dica += `<div style="margin-top:6px">⚠ ${esc($("fCasal").value)} já tem contribuição lançada em ${ja.map(rotComp).join(", ")}.</div>`;
     }
-    $("fDica").textContent = dica;
+    if (st.tipo === "saida" && $("fCat").value === "cl") {
+      const a = ($("fData").value || hoje()).slice(0, 4), ca = cfgAno(a);
+      if (!ca.cadastrado) dica = `⚠ Valor do C.L de ${a} não cadastrado${ca.de ? ` (usando o de ${ca.de})` : ""}. Cadastre em Ajustes.`;
+    }
+    $("fDica").innerHTML = dica;
   }
   function renderComp() {
     const ops = opcoesComp(); for (const x of st.comp) if (!ops.includes(x)) ops.push(x); ops.sort();
@@ -429,7 +485,7 @@
     if (t !== "outros" && !$("fCasal").value) $("fCasal").selectedIndex = 1;
     if (t === "outros") $("fCasal").value = "";
     $("fDesc").dataset.auto = "1"; $("fValor").dataset.auto = "1";
-    if (["caixinha", "outros"].includes(t) || (t === "saida" && $("fCat").value === "despesa")) { $("fValor").value = ""; }
+    if (["contribuicao", "caixinha", "outros"].includes(t) || (t === "saida" && $("fCat").value === "despesa")) { $("fValor").value = ""; }
     if (t === "outros" || (t === "saida" && $("fCat").value === "despesa")) { $("fDesc").value = ""; }
     renderComp(); atualizarAuto(true);
   }
@@ -533,10 +589,37 @@
   // ---------- ajustes ----------
   function renderCfg() {
     if (!st.cfg) return;
-    $("cfgResumo").innerHTML = '<table><tr><th>Casal</th><th class="n">Contribuição</th></tr>' +
-      casais().map((c) => `<tr><td>${esc(c.nome)}</td><td class="n">${brl(c.contribuicao)}</td></tr>`).join("") +
-      `<tr><td>${esc(st.cfg.caixinha?.rotulo || "Caixinha")} (meta por casal)</td><td class="n">${brl(st.cfg.caixinha?.meta || 0)}</td></tr>` +
-      `<tr><td>C.L mensal</td><td class="n">${brl(st.cfg.valores?.cl || 0)}</td></tr></table>`;
+    const anosCfg = Object.keys(st.cfg.anos || {}).sort().reverse();
+    $("cfgAnos").innerHTML = anosCfg.length ? '<table><tr><th>Ano</th><th class="n">Meta caixinha</th><th class="n">C.L mensal</th><th></th></tr>' +
+      anosCfg.map((a) => { const v = st.cfg.anos[a]; return `<tr><td>${a}<div class="muted" style="font-size:11px">${rotCx(a)}</div></td><td class="n">${brl(Number(v.meta_caixinha || 0))}</td><td class="n">${brl(Number(v.cl || 0))}</td><td class="n"><button class="chip" data-edano="${a}">editar</button></td></tr>`; }).join("") + "</table>"
+      : '<p class="muted" style="margin:0">Nenhum ano cadastrado.</p>';
+    if (!$("aAno").value) prepAno(hoje().slice(0, 4));
+    $("cfgCasais").innerHTML = casais().map((c, i) => `<div class="lanc" style="align-items:center"><span>${esc(c.nome)}</span><button class="chip" data-rmcasal="${i}">remover</button></div>`).join("") || '<p class="muted" style="margin:0">Nenhum casal cadastrado.</p>';
+  }
+  function prepAno(a) {
+    const v = st.cfg?.anos?.[a], base = v || cfgAno(a);
+    $("aAno").value = a;
+    $("aMeta").value = base.meta_caixinha ? Number(base.meta_caixinha).toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : "";
+    $("aCl").value = base.cl ? Number(base.cl).toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : "";
+    $("btnSalvarAno").textContent = v ? `Salvar alterações de ${a}` : `Cadastrar ${a}`;
+    $("aDica").textContent = `Em ${a} arrecada-se a ${rotCx(a)}.` + (!v && base.de ? ` Valores sugeridos a partir de ${base.de}.` : "");
+  }
+  async function salvarAno() {
+    const a = $("aAno").value.trim(), meta = parseValor($("aMeta").value || "0"), cl = parseValor($("aCl").value || "0");
+    if (!/^20\d\d$/.test(a)) return toast("Informe um ano válido (ex.: 2027).");
+    if (!(meta >= 0) || !(cl >= 0)) return toast("Valores inválidos.");
+    if (await gravarCfg((c) => { c.anos = c.anos || {}; c.anos[a] = { meta_caixinha: meta, cl }; return c; }, `Ajusta valores de ${a}: meta caixinha ${brl(meta)}, C.L ${brl(cl)}`)) { toast(`${a} salvo ✓`); prepAno(a); }
+  }
+  async function addCasal() {
+    const n = $("nCasal").value.trim().replace(/\s+/g, " ");
+    if (!n) return toast("Digite o nome do casal.");
+    if (casais().some((c) => c.nome.toLowerCase() === n.toLowerCase())) return toast("Esse casal já está na lista.");
+    if (await gravarCfg((c) => { c.casais.push({ nome: n }); return c; }, `Adiciona casal: ${n}`)) { $("nCasal").value = ""; toast("Casal adicionado ✓"); }
+  }
+  async function rmCasal(i) {
+    const n = casais()[i]?.nome; if (!n) return;
+    if (!(await confirmar("Remover casal?", `${n} sai das listas e do resumo. Os lançamentos já feitos continuam.`))) return;
+    if (await gravarCfg((c) => { c.casais = c.casais.filter((x) => x.nome !== n); return c; }, `Remove casal: ${n}`)) toast("Casal removido");
   }
 
   // ---------- navegação ----------
@@ -551,6 +634,7 @@
   $("segTipo").onclick = (e) => { const b = e.target.closest("button"); if (b) setTipo(b.dataset.t); };
   $("fComp").onclick = (e) => { const c = e.target.closest(".chip"); if (!c) return; const ym = c.dataset.ym; st.comp.has(ym) ? st.comp.delete(ym) : st.comp.add(ym); renderComp(); atualizarAuto(false); };
   $("fCasal").onchange = () => atualizarAuto(false);
+  $("fDica").onclick = (e) => { const c = e.target.closest("#usarUltimo"); if (c) { $("fValor").value = Number(c.dataset.v).toLocaleString("pt-BR", { minimumFractionDigits: 2 }); $("fValor").dataset.auto = "0"; } };
   $("fCat").onchange = () => { if ($("fCat").value === "despesa") { if ($("fDesc").dataset.auto === "1") $("fDesc").value = ""; if ($("fValor").dataset.auto === "1") $("fValor").value = ""; } atualizarAuto(false); };
   $("fData").onchange = () => { renderComp(); atualizarAuto(false); };
   $("fDesc").oninput = () => $("fDesc").dataset.auto = "0";
@@ -562,6 +646,11 @@
   $("listaLanc").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; if (b.dataset.ed) editar(Number(b.dataset.ed)); if (b.dataset.del) excluir(Number(b.dataset.del)); };
   $("anoResumo").onchange = renderResumo;
   $("btnCsv").onclick = exportarCSV;
+  $("btnSalvarAno").onclick = salvarAno;
+  $("aAno").oninput = () => { if (/^20\d\d$/.test($("aAno").value.trim())) prepAno($("aAno").value.trim()); };
+  $("cfgAnos").onclick = (e) => { const b = e.target.closest("[data-edano]"); if (b) { prepAno(b.dataset.edano); $("aMeta").focus(); } };
+  $("btnAddCasal").onclick = addCasal;
+  $("cfgCasais").onclick = (e) => { const b = e.target.closest("[data-rmcasal]"); if (b) rmCasal(Number(b.dataset.rmcasal)); };
   $("btnXlsx").onclick = exportarXLSX;
   $("btnRecarregar").onclick = async () => { if (await carregar()) toast("Dados atualizados"); };
   $("btnConectar").onclick = async () => {
