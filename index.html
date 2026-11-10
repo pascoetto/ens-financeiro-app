@@ -167,23 +167,77 @@
   @media (min-width: 600px) { .modal { align-items: center; } }
   .hidden { display: none !important; }
   .err { background: color-mix(in srgb, var(--neg) 10%, var(--card)); color: var(--neg); border-color: color-mix(in srgb, var(--neg) 30%, transparent); }
+  .auth { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: calc(20px + var(--sat)) 20px calc(20px + var(--sab));
+    background: radial-gradient(1200px 600px at 50% -10%, color-mix(in srgb, var(--acc) 22%, var(--bg)), var(--bg)); overflow-y: auto; }
+  .auth-card { width: 100%; max-width: 380px; }
+  .auth-card .logo { width: 56px; height: 56px; border-radius: 16px; background: var(--acc); color: var(--acc-ink); display: grid; place-items: center; font-weight: 800; margin: 0 auto 14px; }
+  .auth-card h1 { text-align: center; font-size: 22px; margin: 0; letter-spacing: -.02em; }
+  .auth-card .sub { text-align: center; color: var(--muted); font-size: 14px; margin: 4px 0 20px; }
+  .check { display: flex; align-items: center; gap: 8px; margin-top: 14px; font-weight: 500; color: var(--ink); }
+  .check input { width: 18px; height: 18px; -webkit-appearance: auto; appearance: auto; }
+  .msg { min-height: 20px; margin: 10px 0 0; font-size: 13px; color: var(--neg); font-weight: 600; }
+  .msg.okmsg { color: var(--pos); }
+  details { border-top: 1px solid var(--line); padding: 4px 0; }
+  details summary { cursor: pointer; padding: 10px 0; font-weight: 600; list-style: none; display: flex; justify-content: space-between; }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::after { content: "›"; color: var(--muted); transition: transform .2s; }
+  details[open] summary::after { transform: rotate(90deg); }
+  .user-btn { width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--acc-2); color: var(--acc); font-weight: 700; font-size: 14px; cursor: pointer; }
+  .perfil { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--acc-2); color: var(--acc); }
+  .perfil.consulta { background: var(--soft); color: var(--muted); }
+  body[data-perfil="consulta"] .so-admin { display: none !important; }
   code { font-size: 12px; background: var(--soft); padding: 1px 5px; border-radius: 6px; }
 </style>
 </head>
 <body>
+<div class="auth" id="auth">
+  <div class="auth-card">
+    <div class="logo">ENS</div>
+    <h1>Financeiro ENS</h1>
+    <p class="sub" id="authSub">Entre com seu usuário</p>
+    <form class="card" id="fLogin" autocomplete="on">
+      <label for="lUser" style="margin-top:0">Usuário</label>
+      <input id="lUser" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="nome.sobrenome">
+      <label for="lSenha">Senha</label>
+      <input id="lSenha" type="password" autocomplete="current-password">
+      <label class="check"><input type="checkbox" id="lManter"> Manter conectado neste aparelho</label>
+      <button class="btn full" id="btnEntrar" type="submit">Entrar</button>
+      <p class="msg" id="lMsg"></p>
+    </form>
+    <form class="card hidden" id="fTroca" autocomplete="off">
+      <h2 style="margin-bottom:4px">Crie sua nova senha</h2>
+      <p class="muted" style="margin-top:0">É o seu primeiro acesso (ou a senha foi redefinida). Use pelo menos 8 caracteres, com letras e números.</p>
+      <input type="text" id="tUserHidden" autocomplete="username" class="hidden">
+      <label for="tNova">Nova senha</label>
+      <input id="tNova" type="password" autocomplete="new-password">
+      <label for="tConf">Confirmar nova senha</label>
+      <input id="tConf" type="password" autocomplete="new-password">
+      <div id="tTokenBox" class="hidden">
+        <label for="tToken">Token do GitHub (administrador)</label>
+        <input id="tToken" type="password" autocomplete="off" placeholder="github_pat_…">
+        <p class="muted" style="margin-bottom:0">Só pedido uma vez. Ele fica guardado criptografado com a sua nova senha.</p>
+      </div>
+      <button class="btn full" id="btnTroca" type="submit">Salvar e entrar</button>
+      <button class="btn full sec" id="btnTrocaVoltar" type="button">Voltar</button>
+      <p class="msg" id="tMsg"></p>
+    </form>
+  </div>
+</div>
+
 <div class="app">
 <aside class="side">
   <div class="brand"><div class="logo">ENS</div><div><b id="brandNome">Equipe ENS</b><span>Financeiro</span></div></div>
   <nav class="nav" id="nav">
     <button data-tab="resumo" class="on"><span class="pill"><svg class="i" viewBox="0 0 24 24"><path d="M3 12l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></span><span>Resumo</span></button>
     <button data-tab="lista"><span class="pill"><svg class="i" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r=".8"/><circle cx="3.5" cy="12" r=".8"/><circle cx="3.5" cy="18" r=".8"/></svg></span><span>Lançamentos</span></button>
-    <button data-tab="lancar" class="add"><span class="pill"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span>Lançar</span></button>
+    <button data-tab="lancar" class="add so-admin"><span class="pill"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span>Lançar</span></button>
     <button data-tab="config"><span class="pill"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></span><span>Ajustes</span></button>
   </nav>
 </aside>
 <div class="content">
 <header class="topbar" id="topbar">
   <div class="t"><div class="sub" id="titulo">Financeiro ENS</div><h1 id="pagina">Resumo</h1></div>
+  <button class="user-btn" id="btnUser" title="Minha conta" aria-label="Minha conta"></button>
   <button class="iconbtn" id="btnRecarregar" title="Atualizar dados" aria-label="Atualizar dados"><svg class="i" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
 </header>
 
@@ -291,9 +345,58 @@
     <div class="cgrid">
       <div>
         <div class="card">
+          <h2>Minha conta</h2>
+          <div id="contaInfo" style="margin-bottom:10px"></div>
+          <details>
+            <summary>Trocar senha</summary>
+            <form id="fMinhaSenha" autocomplete="off">
+              <label for="mAtual" style="margin-top:0">Senha atual</label><input id="mAtual" type="password" autocomplete="current-password">
+              <label for="mNova">Nova senha</label><input id="mNova" type="password" autocomplete="new-password">
+              <label for="mConf">Confirmar nova senha</label><input id="mConf" type="password" autocomplete="new-password">
+              <button class="btn full" type="submit">Salvar nova senha</button>
+              <p class="msg" id="mMsg"></p>
+            </form>
+          </details>
+          <details class="so-admin">
+            <summary>Atualizar meu token do GitHub</summary>
+            <form id="fMeuToken" autocomplete="off">
+              <p class="muted" style="margin-top:0">Use quando o token vencer ou for regenerado.</p>
+              <label for="kAtual" style="margin-top:0">Senha atual</label><input id="kAtual" type="password" autocomplete="current-password">
+              <label for="kToken">Novo token</label><input id="kToken" type="password" autocomplete="off" placeholder="github_pat_…">
+              <button class="btn full" type="submit">Salvar token</button>
+              <p class="msg" id="kMsg"></p>
+            </form>
+          </details>
+          <button class="btn full danger" id="btnSair">Sair</button>
+        </div>
+        <div class="card so-admin">
+          <h2>Usuários</h2>
+          <div id="listaUsuarios"></div>
+          <form id="fUsuario" autocomplete="off" style="margin-top:6px">
+            <h2 id="uTitulo" style="margin:14px 0 0">Novo usuário</h2>
+            <div class="row">
+              <div><label for="uUser">Usuário</label><input id="uUser" autocapitalize="none" spellcheck="false" placeholder="nome.sobrenome"></div>
+              <div><label for="uPerfil">Perfil</label><select id="uPerfil"><option value="consulta">Somente consulta</option><option value="admin">Administrador</option></select></div>
+            </div>
+            <label for="uNome">Nome</label><input id="uNome" placeholder="Nome para exibir">
+            <label for="uSenha">Senha temporária</label><input id="uSenha" type="text" autocomplete="off" placeholder="mínimo 6 caracteres">
+            <div id="uTokens">
+              <label for="uTokDados">Token de leitura dos dados</label><input id="uTokDados" type="password" autocomplete="off" placeholder="github_pat_…">
+              <label for="uTokAcesso">Token do repositório de acesso</label><input id="uTokAcesso" type="password" autocomplete="off" placeholder="github_pat_…">
+              <p class="muted" style="margin-bottom:0">O perfil consulta usa dois tokens próprios: um <b>só de leitura</b> dos dados e um que só pode gravar a lista de usuários (para a pessoa trocar a própria senha).</p>
+            </div>
+            <p class="muted hidden" id="uDicaAdmin" style="margin-bottom:0">O novo administrador vai usar o mesmo token do GitHub que você.</p>
+            <p class="muted">No primeiro acesso a pessoa vai ter que criar uma senha nova.</p>
+            <div class="row"><button class="btn" type="submit" id="btnUsuario">Criar usuário</button><button class="btn sec hidden" type="button" id="btnUsuarioCancelar">Cancelar</button></div>
+            <p class="msg" id="uMsg"></p>
+          </form>
+        </div>
+      </div>
+      <div>
+        <div class="card">
           <h2>Meta da caixinha e C.L por ano</h2>
           <div id="cfgAnos"></div>
-          <div id="anoForm" style="margin-top:6px">
+          <div id="anoForm" class="so-admin" style="margin-top:6px">
             <div class="row">
               <div><label for="aAno">Ano</label><input id="aAno" inputmode="numeric" maxlength="4" placeholder="2027"></div>
               <div><label for="aMeta">Meta/casal</label><input id="aMeta" inputmode="decimal" placeholder="0,00"></div>
@@ -306,24 +409,12 @@
         <div class="card">
           <h2>Casais da equipe</h2>
           <div id="cfgCasais"></div>
-          <div class="row" style="margin-top:10px;align-items:flex-end">
+          <div class="row so-admin" style="margin-top:10px;align-items:flex-end">
             <div style="flex:3"><label for="nCasal">Novo casal</label><input id="nCasal" placeholder="Ex.: Maria e José"></div>
             <div style="flex:1"><button class="btn sec" id="btnAddCasal" style="width:100%">Adicionar</button></div>
           </div>
           <p class="muted" style="margin-bottom:0">Remover um casal só tira ele das listas; os lançamentos antigos continuam.</p>
         </div>
-      </div>
-      <div class="card">
-        <h2>Conexão com o GitHub</h2>
-        <label for="cRepo" style="margin-top:0">Repositório</label>
-        <input id="cRepo" placeholder="usuario/repositorio">
-        <label for="cBranch">Branch</label>
-        <input id="cBranch" placeholder="main">
-        <label for="cToken">Token de acesso (fine-grained)</label>
-        <input id="cToken" type="password" placeholder="github_pat_…" autocomplete="off">
-        <p class="muted">O token fica salvo só neste aparelho. Ele precisa de permissão <b>Contents: Read and write</b> apenas no repositório de dados.</p>
-        <button class="btn full" id="btnConectar">Salvar e conectar</button>
-        <button class="btn full danger" id="btnSair">Esquecer token deste aparelho</button>
       </div>
     </div>
   </section>
@@ -356,7 +447,8 @@
     set(k, v) { try { localStorage.setItem("ensfin." + k, v); } catch {} },
     del(k) { try { localStorage.removeItem("ensfin." + k); } catch {} }
   };
-  const conf = () => ({ repo: ls.get("repo", "pascoetto/ens-financeiro"), branch: ls.get("branch", "main"), token: ls.get("token", "") });
+  const DADOS = "pascoetto/ens-financeiro", ACESSO = "pascoetto/ens-financeiro-acesso", UARQ = "usuarios.json";
+  const conf = () => ({ repo: DADOS, branch: "main", token: st.sess?.tokens?.dados || "" });
 
   // ---------- util ----------
   const brl = (n) => (n < 0 ? "−" : "") + "R$ " + Math.abs(n).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -401,34 +493,34 @@
   const b64dec = (b) => new TextDecoder().decode(Uint8Array.from(atob(b.replace(/\s/g, "")), (c) => c.charCodeAt(0)));
   const b64enc = (s) => { const by = new TextEncoder().encode(s); let bin = ""; for (let i = 0; i < by.length; i += 0x8000) bin += String.fromCharCode.apply(null, by.subarray(i, i + 0x8000)); return btoa(bin); };
   async function gh(caminho, opts = {}) {
-    const c = conf();
-    const r = await fetch(`https://api.github.com/repos/${c.repo}/contents/${caminho}` + (opts.method ? "" : `?ref=${encodeURIComponent(c.branch)}&t=${Date.now()}`), {
+    const c = conf(), repo = opts.repo || c.repo, token = opts.token !== undefined ? opts.token : c.token;
+    const r = await fetch(`https://api.github.com/repos/${repo}/contents/${caminho}` + (opts.method ? "" : `?ref=${encodeURIComponent(c.branch)}&t=${Date.now()}`), {
       method: opts.method || "GET",
-      headers: { Authorization: `Bearer ${c.token}`, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", ...(opts.body ? { "Content-Type": "application/json" } : {}) },
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", ...(opts.body ? { "Content-Type": "application/json" } : {}) },
       body: opts.body ? JSON.stringify(opts.body) : undefined, cache: "no-store"
     });
     if (!r.ok) { const e = new Error(`GitHub ${r.status}`); e.status = r.status; try { e.det = (await r.json()).message; } catch {} throw e; }
     return r.json();
   }
-  async function baixarArquivo(caminho) {
-    const j = await gh(caminho);
+  async function baixarArquivo(caminho, opts = {}) {
+    const j = await gh(caminho, opts);
     if (j.content && j.encoding === "base64") return { txt: b64dec(j.content), sha: j.sha };
     // arquivos grandes (>1 MB) vêm sem conteúdo: usa o blob
-    const c = conf();
-    const r = await fetch(`https://api.github.com/repos/${c.repo}/git/blobs/${j.sha}`, { headers: { Authorization: `Bearer ${c.token}`, Accept: "application/vnd.github+json" } });
+    const c = conf(), repo = opts.repo || c.repo, token = opts.token !== undefined ? opts.token : c.token;
+    const r = await fetch(`https://api.github.com/repos/${repo}/git/blobs/${j.sha}`, { headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), Accept: "application/vnd.github+json" } });
     const b = await r.json(); return { txt: b64dec(b.content), sha: j.sha };
   }
   async function carregar() {
     const c = conf();
-    if (!c.token) { aviso("Configure o token em <b>Ajustes</b> para carregar os dados."); mostrarTab("config"); return false; }
+    if (!c.token) { mostrarLogin(); return false; }
     aviso("");
     try {
       const [l, f] = await Promise.all([baixarArquivo(ARQ), baixarArquivo(CFG)]);
       st.lanc = ordenar(parseCSV(l.txt)); st.sha = l.sha; st.cfg = normCfg(JSON.parse(f.txt)); st.cfgSha = f.sha;
       renderTudo(); return true;
     } catch (e) {
-      const m = e.status === 401 ? "Token inválido ou expirado." : e.status === 404 ? "Repositório ou arquivo não encontrado (confira o nome do repositório e se o token tem acesso a ele)." : "Não foi possível carregar: " + (e.det || e.message);
-      aviso(m + " Veja em <b>Ajustes</b>."); return false;
+      const m = e.status === 401 ? "O token do GitHub deste usuário venceu ou foi revogado." + (st.sess?.perfil === "admin" ? " Atualize em <b>Ajustes → Minha conta</b>." : " Peça ao administrador para redefinir seu acesso.") : e.status === 404 ? "Sem acesso ao repositório de dados (confira as permissões do token)." : "Não foi possível carregar: " + (e.det || e.message);
+      aviso(m); return false;
     }
   }
   // aplica uma alteração e grava; em caso de conflito, recarrega e reaplica
@@ -646,6 +738,7 @@
     if (!st.editId) { if (!$("fData").value) $("fData").value = hoje(); if (!st.comp.size) st.comp.add(hoje().slice(0, 7)); setTipo(st.tipo); }
   }
   function editar(id) {
+    if (st.sess?.perfil !== "admin") return;
     const l = st.lanc.find((x) => x.id === id); if (!l) return;
     const t = l.tipo === "entrada" ? (l.categoria === "contribuicao" ? "contribuicao" : "outros") : l.tipo;
     st.editId = id; st.comp = new Set((l.competencia || "").split(";").filter(Boolean));
@@ -709,12 +802,13 @@
       }
       const v = sinal(l), k = !ehMov(l) ? "a" : l.tipo === "caixinha" ? "c" : l.tipo === "saida" ? "s" : "e";
       const tag = l.tipo === "caixinha" ? '<span class="tag">caixinha</span>' : l.categoria === "ajuste" ? '<span class="tag">ajuste</span>' : "";
-      h += `<div class="lanc"><div class="ic ${k}">${IC[k]}</div><div class="tx"><div>${esc(l.descricao)}${tag}</div><div class="d">${fmtData(l.data)} · <button data-ed="${l.id}">editar</button> · <button data-del="${l.id}">excluir</button></div></div>
+      h += `<div class="lanc"><div class="ic ${k}">${IC[k]}</div><div class="tx"><div>${esc(l.descricao)}${tag}</div><div class="d">${fmtData(l.data)}<span class="so-admin"> · <button data-ed="${l.id}">editar</button> · <button data-del="${l.id}">excluir</button></span></div></div>
             <div class="v ${v < 0 ? "neg" : "pos"}">${(v > 0 ? "+" : "") + brl(v)}<div class="s">saldo ${brl(saldoApos.get(l.id))}</div></div></div>`;
     }
     $("listaLanc").innerHTML = h;
   }
   async function excluir(id) {
+    if (st.sess?.perfil !== "admin") return;
     const l = st.lanc.find((x) => x.id === id); if (!l) return;
     if (!(await confirmar("Excluir lançamento?", `${l.descricao} — ${brl(sinal(l))} em ${fmtData(l.data)}`))) return;
     if (await gravar((rows) => rows.filter((r) => r.id !== id), `Exclui: ${l.descricao} (${brl(sinal(l))})`)) toast("Lançamento excluído");
@@ -750,10 +844,10 @@
     if (!st.cfg) return;
     const anosCfg = Object.keys(st.cfg.anos || {}).sort().reverse();
     $("cfgAnos").innerHTML = anosCfg.length ? '<table><tr><th>Ano</th><th class="n">Meta caixinha</th><th class="n">C.L mensal</th><th></th></tr>' +
-      anosCfg.map((a) => { const v = st.cfg.anos[a]; return `<tr><td>${a}<div class="muted" style="font-size:11px">${rotCx(a)}</div></td><td class="n">${brl(Number(v.meta_caixinha || 0))}</td><td class="n">${brl(Number(v.cl || 0))}</td><td class="n"><button class="chip" data-edano="${a}">editar</button></td></tr>`; }).join("") + "</table>"
+      anosCfg.map((a) => { const v = st.cfg.anos[a]; return `<tr><td>${a}<div class="muted" style="font-size:11px">${rotCx(a)}</div></td><td class="n">${brl(Number(v.meta_caixinha || 0))}</td><td class="n">${brl(Number(v.cl || 0))}</td><td class="n"><button class="chip so-admin" data-edano="${a}">editar</button></td></tr>`; }).join("") + "</table>"
       : '<p class="muted" style="margin:0">Nenhum ano cadastrado.</p>';
     if (!$("aAno").value) prepAno(hoje().slice(0, 4));
-    $("cfgCasais").innerHTML = casais().map((c, i) => `<div class="lanc" style="align-items:center"><span>${esc(c.nome)}</span><button class="chip" data-rmcasal="${i}">remover</button></div>`).join("") || '<p class="muted" style="margin:0">Nenhum casal cadastrado.</p>';
+    $("cfgCasais").innerHTML = casais().map((c, i) => `<div class="lanc" style="align-items:center"><span>${esc(c.nome)}</span><button class="chip so-admin" data-rmcasal="${i}">remover</button></div>`).join("") || '<p class="muted" style="margin:0">Nenhum casal cadastrado.</p>';
   }
   function prepAno(a) {
     const v = st.cfg?.anos?.[a], base = v || cfgAno(a);
@@ -781,8 +875,217 @@
     if (await gravarCfg((c) => { c.casais = c.casais.filter((x) => x.nome !== n); return c; }, `Remove casal: ${n}`)) toast("Casal removido");
   }
 
+  // ---------- autenticação ----------
+  const tenc = new TextEncoder();
+  const u8b64 = (u) => { let b = ""; u.forEach((x) => b += String.fromCharCode(x)); return btoa(b); };
+  const b64u8 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+  const ITER = 600000;
+  async function derivar(senha, salt, iter) {
+    const k = await crypto.subtle.importKey("raw", tenc.encode(senha), "PBKDF2", false, ["deriveBits"]);
+    const bits = new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: iter }, k, 512));
+    const chave = await crypto.subtle.importKey("raw", bits.slice(0, 32), "AES-GCM", false, ["encrypt", "decrypt"]);
+    return { chave, verif: u8b64(bits.slice(32)) };
+  }
+  // registro público do usuário: a senha gera a chave que abre os tokens (nada fica em texto aberto)
+  async function montarRegistro(base, senha, segredo) {
+    const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+    const { chave, verif } = await derivar(senha, salt, ITER);
+    const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, chave, tenc.encode(JSON.stringify(segredo))));
+    return { usuario: base.usuario, nome: base.nome, perfil: base.perfil, trocar_senha: !!base.trocar_senha, salt: u8b64(salt), iter: ITER, verif, iv: u8b64(iv), segredo: u8b64(ct) };
+  }
+  async function abrirRegistro(reg, senha) {
+    const { chave, verif } = await derivar(senha, b64u8(reg.salt), reg.iter || ITER);
+    if (verif !== reg.verif) return null;
+    if (!reg.segredo) return {};
+    try { return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64u8(reg.iv) }, chave, b64u8(reg.segredo)))); } catch { return null; }
+  }
+  const senhaOk = (s) => s.length >= 8 && /[a-zA-Z]/.test(s) && /\d/.test(s);
+  async function lerUsuarios(token) {
+    const r = await baixarArquivo(UARQ, { repo: ACESSO, token: token || "" });
+    const j = JSON.parse(r.txt); st.usuSha = r.sha; st.usuarios = j.usuarios || []; return st.usuarios;
+  }
+  async function gravarUsuarios(alterar, msg, token) {
+    for (let t = 0; t < 3; t++) {
+      const nova = alterar(JSON.parse(JSON.stringify(st.usuarios || [])));
+      try {
+        const r = await gh(UARQ, { repo: ACESSO, token, method: "PUT", body: { message: msg, content: b64enc(JSON.stringify({ usuarios: nova }, null, 2) + "\n"), sha: st.usuSha, branch: "main" } });
+        st.usuarios = nova; st.usuSha = r.content.sha; return;
+      } catch (e) {
+        if (e.status === 409 || e.status === 422) { await lerUsuarios(token); continue; }
+        if (e.status === 403 || e.status === 404) { const er = new Error("o token não tem permissão de escrita no repositório de acesso"); er.status = e.status; throw er; }
+        throw e;
+      }
+    }
+    throw new Error("conflito ao gravar, tente de novo");
+  }
+  async function testarToken(token) {
+    try { await gh(CFG, { token }); return true; } catch (e) { return false; }
+  }
+  function salvarSessao(sess, manter) {
+    st.sess = sess; const v = JSON.stringify(sess);
+    try { sessionStorage.setItem("ensfin.sess", v); } catch {}
+    if (manter) ls.set("sess", v); else ls.del("sess");
+  }
+  function lerSessao() {
+    let v = null; try { v = sessionStorage.getItem("ensfin.sess"); } catch {}
+    try { return JSON.parse(v || ls.get("sess", "") || "null"); } catch { return null; }
+  }
+  function sair() { try { sessionStorage.removeItem("ensfin.sess"); } catch {} ls.del("sess"); st.sess = null; location.reload(); }
+  function mostrarLogin() {
+    $("auth").classList.remove("hidden"); $("fLogin").classList.remove("hidden"); $("fTroca").classList.add("hidden");
+    $("authSub").textContent = "Entre com seu usuário"; setTimeout(() => $(($("lUser").value ? "lSenha" : "lUser")).focus(), 50);
+  }
+  function entrar() {
+    $("auth").classList.add("hidden");
+    document.body.dataset.perfil = st.sess.perfil;
+    const ini = (st.sess.nome || st.sess.usuario).split(/[\s.]+/).filter(Boolean).slice(0, 2).map((x) => x[0].toUpperCase()).join("");
+    $("btnUser").textContent = ini;
+    renderConta(); mostrarTab("resumo"); carregar();
+  }
+  const ocupado = (btn, sim, txt) => { btn.disabled = sim; if (txt) { btn.dataset.t = btn.dataset.t || btn.textContent; btn.textContent = sim ? txt : btn.dataset.t; } };
+
+  $("fLogin").onsubmit = async (e) => {
+    e.preventDefault(); const msg = $("lMsg"); msg.textContent = "";
+    const u = $("lUser").value.trim().toLowerCase(), p = $("lSenha").value;
+    if (!u || !p) { msg.textContent = "Informe usuário e senha."; return; }
+    ocupado($("btnEntrar"), true, "Entrando…");
+    try {
+      let lista;
+      try { lista = await lerUsuarios(); }
+      catch (er) { msg.textContent = er.status === 404 ? "Lista de usuários não encontrada (repositório de acesso)." : er.status === 403 ? "Muitas tentativas seguidas. Aguarde alguns minutos." : "Sem conexão com o GitHub. Tente de novo."; return; }
+      const reg = lista.find((x) => x.usuario.toLowerCase() === u);
+      const sec = reg ? await abrirRegistro(reg, p) : null;
+      if (!sec) { msg.textContent = "Usuário ou senha inválidos."; $("lSenha").select(); return; }
+      if (reg.trocar_senha || !sec.dados) {
+        st.pend = { reg, sec, senha: p, manter: $("lManter").checked };
+        $("fLogin").classList.add("hidden"); $("fTroca").classList.remove("hidden");
+        $("tUserHidden").value = reg.usuario; $("tTokenBox").classList.toggle("hidden", !!sec.dados);
+        $("authSub").textContent = `Olá, ${reg.nome || reg.usuario}`; $("tNova").focus(); return;
+      }
+      salvarSessao({ usuario: reg.usuario, nome: reg.nome, perfil: reg.perfil, tokens: sec }, $("lManter").checked);
+      $("lSenha").value = ""; entrar();
+    } finally { ocupado($("btnEntrar"), false, "Entrar"); }
+  };
+  $("btnTrocaVoltar").onclick = () => { st.pend = null; $("tNova").value = $("tConf").value = $("tToken").value = ""; mostrarLogin(); };
+  $("fTroca").onsubmit = async (e) => {
+    e.preventDefault(); const msg = $("tMsg"); msg.textContent = "";
+    const pd = st.pend; if (!pd) return mostrarLogin();
+    const nova = $("tNova").value, cf = $("tConf").value;
+    if (!senhaOk(nova)) { msg.textContent = "A senha precisa ter 8 caracteres ou mais, com letras e números."; return; }
+    if (nova !== cf) { msg.textContent = "As senhas não conferem."; return; }
+    if (nova === pd.senha) { msg.textContent = "A nova senha precisa ser diferente da atual."; return; }
+    let segredo = pd.sec;
+    ocupado($("btnTroca"), true, "Salvando…");
+    try {
+      if (!segredo.dados) {
+        const t = $("tToken").value.trim();
+        if (!t) { msg.textContent = "Cole o token do GitHub."; return; }
+        if (!(await testarToken(t))) { msg.textContent = "Esse token não abre o repositório de dados. Confira as permissões."; return; }
+        segredo = { dados: t, acesso: t };
+      }
+      const reg = await montarRegistro({ ...pd.reg, trocar_senha: false }, nova, segredo);
+      await lerUsuarios(segredo.acesso);
+      await gravarUsuarios((l) => l.map((x) => x.usuario === reg.usuario ? reg : x), `Troca de senha: ${reg.usuario}`, segredo.acesso);
+      salvarSessao({ usuario: reg.usuario, nome: reg.nome, perfil: reg.perfil, tokens: segredo }, pd.manter);
+      st.pend = null; $("tNova").value = $("tConf").value = $("tToken").value = $("lSenha").value = "";
+      toast("Senha criada ✓"); entrar();
+    } catch (er) { msg.textContent = "Não foi possível salvar: " + (er.det || er.message); }
+    finally { ocupado($("btnTroca"), false, "Salvar e entrar"); }
+  };
+
+  // ---------- minha conta e usuários ----------
+  const nomePerfil = (p) => p === "admin" ? "Administrador" : "Somente consulta";
+  function renderConta() {
+    if (!st.sess) return;
+    $("contaInfo").innerHTML = `<div style="font-weight:600">${esc(st.sess.nome || st.sess.usuario)}</div><div class="muted">${esc(st.sess.usuario)} · <span class="perfil ${st.sess.perfil}">${nomePerfil(st.sess.perfil)}</span></div>`;
+    if (st.sess.perfil === "admin") renderUsuarios();
+  }
+  async function renderUsuarios() {
+    try { await lerUsuarios(st.sess.tokens.acesso); } catch { $("listaUsuarios").innerHTML = '<p class="muted">Não foi possível ler a lista de usuários.</p>'; return; }
+    $("listaUsuarios").innerHTML = st.usuarios.map((u) => `<div class="lanc" style="align-items:center"><div class="tx"><div>${esc(u.nome || u.usuario)} <span class="perfil ${u.perfil}">${nomePerfil(u.perfil)}</span></div><div class="d">${esc(u.usuario)}${u.trocar_senha ? " · aguardando primeiro acesso" : ""}</div></div>` +
+      (u.usuario === st.sess.usuario ? '<span class="muted">você</span>' : `<div style="display:flex;gap:6px"><button class="chip" data-redef="${esc(u.usuario)}">redefinir</button><button class="chip" data-rmuser="${esc(u.usuario)}">excluir</button></div>`) + "</div>").join("");
+  }
+  function prepUsuario(u) {
+    $("uUser").value = u ? u.usuario : ""; $("uUser").disabled = !!u; $("uNome").value = u ? (u.nome || "") : "";
+    $("uPerfil").value = u ? u.perfil : "consulta"; $("uSenha").value = ""; $("uTokDados").value = $("uTokAcesso").value = ""; $("uMsg").textContent = "";
+    $("uTitulo").textContent = u ? `Redefinir acesso de ${u.usuario}` : "Novo usuário"; $("btnUsuario").textContent = u ? "Redefinir" : "Criar usuário";
+    $("btnUsuarioCancelar").classList.toggle("hidden", !u); perfilForm();
+  }
+  function perfilForm() { const adm = $("uPerfil").value === "admin"; $("uTokens").classList.toggle("hidden", adm); $("uDicaAdmin").classList.toggle("hidden", !adm); }
+  $("uPerfil").onchange = perfilForm;
+  $("btnUsuarioCancelar").onclick = () => prepUsuario(null);
+  $("listaUsuarios").onclick = async (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.redef) { prepUsuario(st.usuarios.find((x) => x.usuario === b.dataset.redef)); $("uSenha").focus(); }
+    if (b.dataset.rmuser) {
+      const u = b.dataset.rmuser;
+      if (!(await confirmar("Excluir usuário?", `${u} não vai mais conseguir entrar.`))) return;
+      try { await gravarUsuarios((l) => l.filter((x) => x.usuario !== u), `Remove usuário: ${u}`, st.sess.tokens.acesso); toast("Usuário excluído"); renderUsuarios(); }
+      catch (er) { toast("Erro: " + (er.det || er.message), 4000); }
+    }
+  };
+  $("fUsuario").onsubmit = async (e) => {
+    e.preventDefault(); const msg = $("uMsg"); msg.className = "msg"; msg.textContent = "";
+    const usuario = $("uUser").value.trim().toLowerCase(), nome = $("uNome").value.trim(), perfil = $("uPerfil").value, senha = $("uSenha").value;
+    const existente = st.usuarios.find((x) => x.usuario === usuario), redef = $("uUser").disabled;
+    if (!/^[a-z0-9._-]{3,40}$/.test(usuario)) { msg.textContent = "Usuário: use letras minúsculas, números, ponto ou hífen (mín. 3)."; return; }
+    if (existente && !redef) { msg.textContent = "Esse usuário já existe. Use “redefinir” na lista."; return; }
+    if (senha.length < 6) { msg.textContent = "A senha temporária precisa ter pelo menos 6 caracteres."; return; }
+    let segredo;
+    ocupado($("btnUsuario"), true, "Salvando…");
+    try {
+      if (perfil === "admin") segredo = { dados: st.sess.tokens.dados, acesso: st.sess.tokens.acesso };
+      else {
+        const td = $("uTokDados").value.trim(), ta = $("uTokAcesso").value.trim();
+        if (!td || !ta) { msg.textContent = "Cole os dois tokens do perfil consulta."; return; }
+        if (td === st.sess.tokens.dados) { msg.textContent = "Não use o token de administrador no perfil consulta: ele permite gravar."; return; }
+        if (!(await testarToken(td))) { msg.textContent = "O token de leitura não abre o repositório de dados."; return; }
+        try { await baixarArquivo(UARQ, { repo: ACESSO, token: ta }); } catch { msg.textContent = "O token de acesso não abre o repositório de usuários."; return; }
+        segredo = { dados: td, acesso: ta };
+      }
+      const reg = await montarRegistro({ usuario, nome: nome || usuario, perfil, trocar_senha: true }, senha, segredo);
+      await gravarUsuarios((l) => existente ? l.map((x) => x.usuario === usuario ? reg : x) : [...l, reg], `${existente ? "Redefine" : "Cria"} usuário: ${usuario} (${nomePerfil(perfil)})`, st.sess.tokens.acesso);
+      toast(existente ? "Acesso redefinido ✓" : "Usuário criado ✓"); prepUsuario(null); renderUsuarios();
+      msg.className = "msg okmsg"; msg.textContent = `Passe para a pessoa: usuário ${usuario} e a senha temporária.`;
+    } catch (er) { msg.textContent = "Não foi possível salvar: " + (er.det || er.message); }
+    finally { ocupado($("btnUsuario"), false); }
+  };
+  $("fMinhaSenha").onsubmit = async (e) => {
+    e.preventDefault(); const msg = $("mMsg"); msg.className = "msg"; msg.textContent = "";
+    const at = $("mAtual").value, nv = $("mNova").value, cf = $("mConf").value;
+    if (!senhaOk(nv)) { msg.textContent = "A senha precisa ter 8 caracteres ou mais, com letras e números."; return; }
+    if (nv !== cf) { msg.textContent = "As senhas não conferem."; return; }
+    try {
+      const lista = await lerUsuarios(st.sess.tokens.acesso), reg = lista.find((x) => x.usuario === st.sess.usuario);
+      const sec = reg ? await abrirRegistro(reg, at) : null;
+      if (!sec) { msg.textContent = "Senha atual incorreta."; return; }
+      const novo = await montarRegistro({ ...reg, trocar_senha: false }, nv, sec);
+      await gravarUsuarios((l) => l.map((x) => x.usuario === novo.usuario ? novo : x), `Troca de senha: ${novo.usuario}`, sec.acesso);
+      $("mAtual").value = $("mNova").value = $("mConf").value = ""; msg.className = "msg okmsg"; msg.textContent = "Senha alterada ✓";
+    } catch (er) { msg.textContent = "Não foi possível salvar: " + (er.det || er.message); }
+  };
+  $("fMeuToken").onsubmit = async (e) => {
+    e.preventDefault(); const msg = $("kMsg"); msg.className = "msg"; msg.textContent = "";
+    const at = $("kAtual").value, t = $("kToken").value.trim();
+    if (!t) { msg.textContent = "Cole o novo token."; return; }
+    try {
+      if (!(await testarToken(t))) { msg.textContent = "Esse token não abre o repositório de dados."; return; }
+      const lista = await lerUsuarios(t), reg = lista.find((x) => x.usuario === st.sess.usuario);
+      const sec = reg ? await abrirRegistro(reg, at) : null;
+      if (!sec) { msg.textContent = "Senha atual incorreta."; return; }
+      const segredo = { dados: t, acesso: t };
+      const novo = await montarRegistro({ ...reg, trocar_senha: false }, at, segredo);
+      await gravarUsuarios((l) => l.map((x) => x.usuario === novo.usuario ? novo : x), `Atualiza token: ${novo.usuario}`, t);
+      salvarSessao({ ...st.sess, tokens: segredo }, !!ls.get("sess", ""));
+      $("kAtual").value = $("kToken").value = ""; msg.className = "msg okmsg"; msg.textContent = "Token atualizado ✓"; carregar();
+    } catch (er) { msg.textContent = "Não foi possível salvar: " + (er.det || er.message); }
+  };
+  $("btnSair").onclick = async () => { if (await confirmar("Sair?", "Você vai precisar entrar de novo com usuário e senha.")) sair(); };
+  $("btnUser").onclick = () => mostrarTab("config");
+
   // ---------- navegação ----------
   function mostrarTab(t) {
+    if (t === "lancar" && st.sess?.perfil !== "admin") t = "resumo";
     document.querySelectorAll("#nav button").forEach((b) => b.classList.toggle("on", b.dataset.tab === t));
     $("pagina").textContent = { resumo: "Resumo", lancar: st.editId ? "Editar lançamento" : "Novo lançamento", lista: "Lançamentos", config: "Ajustes" }[t];
     document.querySelectorAll("main > section").forEach((s) => s.classList.toggle("hidden", s.id !== "tab-" + t));
@@ -815,16 +1118,10 @@
   $("cfgCasais").onclick = (e) => { const b = e.target.closest("[data-rmcasal]"); if (b) rmCasal(Number(b.dataset.rmcasal)); };
   $("btnXlsx").onclick = exportarXLSX;
   $("btnRecarregar").onclick = async () => { const b = $("btnRecarregar"); b.classList.add("spin"); const ok = await carregar(); b.classList.remove("spin"); if (ok) toast("Dados atualizados"); };
-  $("btnConectar").onclick = async () => {
-    ls.set("repo", $("cRepo").value.trim() || "pascoetto/ens-financeiro"); ls.set("branch", $("cBranch").value.trim() || "main");
-    if ($("cToken").value.trim()) ls.set("token", $("cToken").value.trim());
-    if (await carregar()) { toast("Conectado ✓"); mostrarTab("resumo"); }
-  };
-  $("btnSair").onclick = async () => { if (await confirmar("Esquecer token?", "Você vai precisar colar o token de novo para usar neste aparelho.")) { ls.del("token"); $("cToken").value = ""; toast("Token removido deste aparelho"); } };
-
   // ---------- início ----------
-  const c = conf(); $("cRepo").value = c.repo; $("cBranch").value = c.branch; $("cToken").value = c.token;
-  carregar();
+  ls.del("token"); ls.del("repo"); ls.del("branch");
+  const sess = lerSessao();
+  if (sess?.tokens?.dados) { st.sess = sess; entrar(); } else mostrarLogin();
 })();
 </script>
 </body>
