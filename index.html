@@ -2,81 +2,189 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f4e79" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#11161d" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Financeiro ENS">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
 <title>Financeiro ENS</title>
 <style>
   :root {
-    --bg: #f6f5f2; --card: #fff; --ink: #1d1f23; --muted: #6b6f76; --line: #e3e1dc;
-    --acc: #1f4e79; --acc-2: #e8eef5; --pos: #1f7a4d; --neg: #b3261e; --warn: #9a6700;
+    --bg: #f4f5f7; --card: #ffffff; --ink: #161a20; --muted: #6a717c; --line: #e4e6ea; --soft: #eef1f5;
+    --acc: #1f4e79; --acc-ink: #ffffff; --acc-2: #e6eef7; --pos: #16794a; --neg: #b3261e;
+    --shadow: 0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.06);
+    --radius: 16px; --nav-h: 64px; --side-w: 240px;
+    --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px); --sar: env(safe-area-inset-right, 0px);
+    color-scheme: light dark;
   }
-  * { box-sizing: border-box; }
-  body { margin: 0; font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--ink); }
-  header { background: var(--acc); color: #fff; padding: 14px 16px 0; position: sticky; top: 0; z-index: 5; }
-  header h1 { margin: 0 0 10px; font-size: 18px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
-  header button.icon { background: none; border: 0; color: #fff; font-size: 20px; padding: 2px 6px; cursor: pointer; }
-  nav { display: flex; gap: 4px; }
-  nav button { flex: 1; background: none; border: 0; color: #cfdbe8; padding: 10px 4px; font: inherit; font-weight: 600; border-bottom: 3px solid transparent; cursor: pointer; }
-  nav button.on { color: #fff; border-bottom-color: #fff; }
-  main { max-width: 720px; margin: 0 auto; padding: 14px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
-  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
-  .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
-  .kpi .l { font-size: 12px; color: var(--muted); }
-  .kpi .v { font-size: 15px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .kpi.main { grid-column: 1 / -1; }
-  .kpi.main .v { font-size: 26px; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0e1217; --card: #171c23; --ink: #e8ebef; --muted: #98a1ad; --line: #2a313b; --soft: #1e252e;
+      --acc: #6aa6e0; --acc-ink: #0b1622; --acc-2: #1b2a3a; --pos: #4cc38a; --neg: #ff8a80; --shadow: none; }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); }
+  body { font: 15px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", sans-serif; -webkit-font-smoothing: antialiased; }
+  button { font: inherit; color: inherit; }
+  svg.i { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+  /* ---------- estrutura ---------- */
+  .side { position: fixed; z-index: 30; }
+  .brand { display: none; }
+  .content { min-height: 100vh; }
+  .topbar { position: sticky; top: 0; z-index: 20; padding: calc(10px + var(--sat)) calc(16px + var(--sar)) 10px calc(16px + var(--sal));
+    background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: saturate(180%) blur(14px); -webkit-backdrop-filter: saturate(180%) blur(14px);
+    display: flex; align-items: center; gap: 12px; border-bottom: 1px solid transparent; transition: border-color .2s; }
+  .topbar.scrolled { border-bottom-color: var(--line); }
+  .topbar .t { flex: 1; min-width: 0; }
+  .topbar h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -.02em; }
+  .topbar .sub { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .iconbtn { width: 40px; height: 40px; border-radius: 12px; border: 0; background: var(--card); box-shadow: var(--shadow); display: grid; place-items: center; cursor: pointer; color: var(--ink); }
+  .iconbtn.spin svg { animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  main { max-width: 1100px; margin: 0 auto; padding: 6px calc(14px + var(--sar)) calc(var(--nav-h) + var(--sab) + 24px) calc(14px + var(--sal)); }
+
+  /* navegação inferior (celular) */
+  .nav { position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-around; align-items: stretch;
+    height: calc(var(--nav-h) + var(--sab)); padding: 0 var(--sar) var(--sab) var(--sal);
+    background: color-mix(in srgb, var(--card) 88%, transparent); backdrop-filter: saturate(180%) blur(16px); -webkit-backdrop-filter: saturate(180%) blur(16px);
+    border-top: 1px solid var(--line); }
+  .nav button { flex: 1; border: 0; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    color: var(--muted); font-size: 11px; font-weight: 600; cursor: pointer; padding: 6px 0; position: relative; }
+  .nav button .pill { display: grid; place-items: center; width: 56px; height: 30px; border-radius: 15px; transition: background .2s; }
+  .nav button.on { color: var(--acc); }
+  .nav button.on .pill { background: var(--acc-2); }
+  .nav button.add .pill { background: var(--acc); color: var(--acc-ink); width: 48px; height: 48px; border-radius: 16px; margin-top: -18px; box-shadow: 0 6px 16px color-mix(in srgb, var(--acc) 40%, transparent); }
+  .nav button.add.on .pill { background: var(--acc); }
+
+  /* desktop: barra lateral */
+  @media (min-width: 900px) {
+    .side { top: 0; bottom: 0; left: 0; width: var(--side-w); background: var(--card); border-right: 1px solid var(--line); padding: 22px 14px; display: flex; flex-direction: column; gap: 18px; }
+    .brand { display: flex; align-items: center; gap: 10px; padding: 0 8px; }
+    .brand .logo { width: 36px; height: 36px; border-radius: 10px; background: var(--acc); color: var(--acc-ink); display: grid; place-items: center; font-weight: 800; font-size: 14px; }
+    .brand b { display: block; font-size: 15px; } .brand span { font-size: 12px; color: var(--muted); }
+    .nav { position: static; flex-direction: column; justify-content: flex-start; height: auto; padding: 0; background: none; border: 0; backdrop-filter: none; -webkit-backdrop-filter: none; gap: 4px; }
+    .nav button { flex: none; flex-direction: row; justify-content: flex-start; gap: 12px; font-size: 14px; padding: 10px 12px; border-radius: 12px; }
+    .nav button .pill, .nav button.add .pill { width: auto; height: auto; background: none !important; margin: 0; box-shadow: none; color: inherit; border-radius: 0; }
+    .nav button:hover { background: var(--soft); color: var(--ink); }
+    .nav button.on { background: var(--acc-2); color: var(--acc); }
+    .content { margin-left: var(--side-w); }
+    .topbar { padding: 22px 32px 14px; }
+    .topbar h1 { font-size: 28px; }
+    main { padding: 6px 32px 40px; }
+    .rgrid { display: grid; grid-template-columns: 1.25fr 1fr; gap: 14px; align-items: start; }
+    .rgrid .wide { grid-column: 1 / -1; }
+    .kpis { grid-template-columns: 2fr 1fr 1fr 1fr !important; }
+    .kpi.main { grid-column: auto !important; }
+    .form-wrap { max-width: 620px; }
+    .lgrid { display: grid; grid-template-columns: 1fr 300px; gap: 14px; align-items: start; }
+    .lgrid .lside { position: sticky; top: 110px; display: flex; flex-direction: column; gap: 14px; }
+    .cgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+  }
+
+  /* ---------- componentes ---------- */
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; box-shadow: var(--shadow); }
+  .rgrid .card, .lgrid .card, .cgrid .card { margin-bottom: 0; }
+  .rgrid, .lgrid, .cgrid { margin-bottom: 14px; }
+  @media (max-width: 899px) { .lgrid { display: flex; flex-direction: column; gap: 14px; } .lgrid .lside { display: contents; } .lgrid .lside .card:first-child { order: 1; } .lgrid #listaLanc { order: 2; } .lgrid .lside .card:last-child { order: 3; } }
+  .rgrid > *, .lgrid > *, .cgrid > * { margin-bottom: 14px; }
+  @media (min-width: 900px) { .rgrid > *, .lgrid > *, .cgrid > * { margin-bottom: 0; } }
+  .card h2 { font-size: 15px; font-weight: 700; margin: 0 0 12px; letter-spacing: -.01em; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .card h2 .muted { font-weight: 500; }
+  .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 2px 0 12px; }
+  .seg-ano { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .seg-ano::-webkit-scrollbar { display: none; }
+  .seg-ano button { border: 1px solid var(--line); background: var(--card); padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; color: var(--muted); }
+  .seg-ano button.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+  .kpi { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; box-shadow: var(--shadow); min-width: 0; }
+  .kpi .l { font-size: 12px; color: var(--muted); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kpi .v { font-size: 15px; font-weight: 700; margin-top: 4px; font-variant-numeric: tabular-nums; white-space: nowrap; letter-spacing: -.01em; }
+  .kpi.main { grid-column: 1 / -1; background: var(--acc); color: var(--acc-ink); border-color: transparent; }
+  .kpi.main .l { color: inherit; opacity: .8; }
+  .kpi.main .v { font-size: 30px; letter-spacing: -.02em; }
+  .kpi.main .v.neg { color: inherit; }
   .pos { color: var(--pos); } .neg { color: var(--neg); }
   table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-  th, td { padding: 7px 4px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  th, td { padding: 8px 4px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
   th { font-size: 12px; color: var(--muted); font-weight: 600; }
   td.n, th.n { text-align: right; white-space: nowrap; }
-  .grid-wrap { overflow-x: auto; }
-  .mes-grid td, .mes-grid th { text-align: center; padding: 6px 3px; font-size: 13px; }
-  .mes-grid td:first-child, .mes-grid th:first-child { text-align: left; white-space: nowrap; }
-  .ok { color: var(--pos); font-weight: 700; } .falta { color: #c9c6bf; }
-  .bar { height: 8px; background: var(--acc-2); border-radius: 4px; overflow: hidden; margin-top: 4px; }
-  .bar > i { display: block; height: 100%; background: var(--acc); }
-  label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; font-weight: 600; }
-  input, select, textarea { width: 100%; font: inherit; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); }
-  .row { display: flex; gap: 10px; } .row > * { flex: 1; }
-  .seg { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
-  .seg button { padding: 10px; border: 1px solid var(--line); background: #fff; border-radius: 8px; font: inherit; font-weight: 600; cursor: pointer; color: var(--ink); }
-  .seg button.on { background: var(--acc); color: #fff; border-color: var(--acc); }
-  .btn { display: inline-block; padding: 12px 16px; border-radius: 10px; border: 0; background: var(--acc); color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
-  .btn.full { width: 100%; margin-top: 14px; }
+  .grid-wrap { overflow-x: auto; margin: 0 -4px; }
+  .mes-grid td, .mes-grid th { text-align: center; padding: 7px 3px; font-size: 13px; }
+  .mes-grid td:first-child, .mes-grid th:first-child { text-align: left; white-space: nowrap; position: sticky; left: 0; background: var(--card); padding-right: 8px; }
+  .ok { color: var(--pos); font-weight: 700; } .falta { color: var(--line); }
+  .dot { display: inline-block; width: 18px; height: 18px; border-radius: 6px; line-height: 18px; font-size: 11px; }
+  .dot.ok { background: color-mix(in srgb, var(--pos) 16%, transparent); color: var(--pos); }
+  .bar { height: 8px; background: var(--soft); border-radius: 4px; overflow: hidden; margin-top: 6px; }
+  .bar > i { display: block; height: 100%; background: var(--acc); border-radius: 4px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 5px; font-weight: 600; }
+  input, select, textarea { width: 100%; font: inherit; font-size: 16px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--ink); outline: none; transition: border-color .15s, box-shadow .15s; -webkit-appearance: none; appearance: none; }
+  select { background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 18px) 52%, calc(100% - 13px) 52%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 32px; }
+  input:focus, select:focus { border-color: var(--acc); box-shadow: 0 0 0 3px color-mix(in srgb, var(--acc) 20%, transparent); }
+  .row { display: flex; gap: 10px; } .row > * { flex: 1; min-width: 0; }
+  .seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background: var(--soft); padding: 4px; border-radius: 14px; }
+  .seg button { padding: 9px 4px; border: 0; background: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--muted); }
+  .seg button.on { background: var(--card); color: var(--ink); box-shadow: var(--shadow); }
+  @media (max-width: 380px) { .seg { grid-template-columns: repeat(2, 1fr); } }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 16px; border-radius: 14px; border: 0; background: var(--acc); color: var(--acc-ink); font-weight: 650; cursor: pointer; transition: transform .1s, opacity .2s; }
+  .btn:active { transform: scale(.98); }
+  .btn.full { width: 100%; margin-top: 16px; }
   .btn.sec { background: var(--acc-2); color: var(--acc); }
-  .btn.danger { background: #fbe9e7; color: var(--neg); }
+  .btn.danger { background: color-mix(in srgb, var(--neg) 12%, transparent); color: var(--neg); }
   .btn:disabled { opacity: .5; cursor: default; }
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-  .chip { padding: 6px 10px; border-radius: 16px; border: 1px solid var(--line); background: #fff; font-size: 13px; cursor: pointer; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+  .chip { display: inline-block; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); font-size: 13px; font-weight: 600; cursor: pointer; color: var(--ink); }
+  .chip.on { background: var(--acc); color: var(--acc-ink); border-color: var(--acc); }
   .muted { color: var(--muted); font-size: 13px; }
-  .lanc { display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+  .lanc { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--line); }
   .lanc:last-child { border-bottom: 0; }
-  .lanc .d { font-size: 12px; color: var(--muted); }
-  .lanc .v { text-align: right; white-space: nowrap; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .lanc .s { font-size: 12px; color: var(--muted); font-weight: 400; }
-  .lanc button { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 13px; padding: 2px 0; text-decoration: underline; }
-  .tag { display: inline-block; font-size: 11px; padding: 1px 6px; border-radius: 8px; background: var(--acc-2); color: var(--acc); margin-left: 4px; vertical-align: 1px; }
-  .mesh { font-size: 13px; font-weight: 700; color: var(--acc); margin: 14px 0 2px; display: flex; justify-content: space-between; }
-  #toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: #1d1f23; color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: 90vw; z-index: 20; }
-  #toast.show { opacity: 1; }
-  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: none; align-items: center; justify-content: center; z-index: 10; padding: 16px; }
+  .lanc .ic { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; flex: none; background: var(--soft); color: var(--muted); }
+  .lanc .ic.e { background: color-mix(in srgb, var(--pos) 14%, transparent); color: var(--pos); }
+  .lanc .ic.s { background: color-mix(in srgb, var(--neg) 12%, transparent); color: var(--neg); }
+  .lanc .ic.c { background: var(--acc-2); color: var(--acc); }
+  .lanc .ic svg { width: 18px; height: 18px; }
+  .lanc .tx { flex: 1; min-width: 0; }
+  .lanc .tx > div:first-child { overflow-wrap: anywhere; }
+  .lanc .d { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .lanc .v { text-align: right; white-space: nowrap; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .lanc .s { font-size: 11px; color: var(--muted); font-weight: 500; }
+  .lanc .d button { background: none; border: 0; color: var(--acc); cursor: pointer; font-size: 12px; padding: 2px 0; font-weight: 600; }
+  .tag { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 8px; background: var(--acc-2); color: var(--acc); margin-left: 6px; vertical-align: 1px; font-weight: 600; }
+  .mesh { font-size: 12px; font-weight: 700; color: var(--muted); margin: 18px 0 2px; display: flex; justify-content: space-between; text-transform: uppercase; letter-spacing: .04em; }
+  .mesh:first-child { margin-top: 0; }
+  #toast { position: fixed; left: 50%; bottom: calc(var(--nav-h) + var(--sab) + 14px); transform: translateX(-50%) translateY(8px); background: var(--ink); color: var(--bg); padding: 11px 16px; border-radius: 14px; font-size: 14px; font-weight: 600; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; max-width: 90vw; z-index: 50; }
+  #toast.show { opacity: 1; transform: translateX(-50%); }
+  @media (min-width: 900px) { #toast { bottom: 24px; left: calc(50% + var(--side-w) / 2); } }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: flex-end; justify-content: center; z-index: 60; padding: 16px 16px calc(16px + var(--sab)); }
   .modal.show { display: flex; }
   .modal .card { max-width: 420px; width: 100%; margin: 0; }
+  @media (min-width: 600px) { .modal { align-items: center; } }
   .hidden { display: none !important; }
-  .err { background: #fbe9e7; color: var(--neg); border-color: #f3c7c1; }
+  .err { background: color-mix(in srgb, var(--neg) 10%, var(--card)); color: var(--neg); border-color: color-mix(in srgb, var(--neg) 30%, transparent); }
+  code { font-size: 12px; background: var(--soft); padding: 1px 5px; border-radius: 6px; }
 </style>
 </head>
 <body>
-<header>
-  <h1><span id="titulo">Financeiro ENS</span><button class="icon" id="btnRecarregar" title="Recarregar">⟳</button></h1>
-  <nav>
-    <button data-tab="resumo" class="on">Resumo</button>
-    <button data-tab="lancar">Lançar</button>
-    <button data-tab="lista">Lançamentos</button>
-    <button data-tab="config">Ajustes</button>
+<div class="app">
+<aside class="side">
+  <div class="brand"><div class="logo">ENS</div><div><b id="brandNome">Equipe ENS</b><span>Financeiro</span></div></div>
+  <nav class="nav" id="nav">
+    <button data-tab="resumo" class="on"><span class="pill"><svg class="i" viewBox="0 0 24 24"><path d="M3 12l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></span><span>Resumo</span></button>
+    <button data-tab="lista"><span class="pill"><svg class="i" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r=".8"/><circle cx="3.5" cy="12" r=".8"/><circle cx="3.5" cy="18" r=".8"/></svg></span><span>Lançamentos</span></button>
+    <button data-tab="lancar" class="add"><span class="pill"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span>Lançar</span></button>
+    <button data-tab="config"><span class="pill"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></span><span>Ajustes</span></button>
   </nav>
+</aside>
+<div class="content">
+<header class="topbar" id="topbar">
+  <div class="t"><div class="sub" id="titulo">Financeiro ENS</div><h1 id="pagina">Resumo</h1></div>
+  <button class="iconbtn" id="btnRecarregar" title="Atualizar dados" aria-label="Atualizar dados"><svg class="i" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
 </header>
 
 <main>
@@ -86,35 +194,37 @@
   <section id="tab-resumo">
     <div class="kpis">
       <div class="kpi main"><div class="l">Saldo total em caixa</div><div class="v" id="kSaldo">—</div></div>
-      <div class="kpi"><div class="l">Caixa (sem caixinha)</div><div class="v" id="kCaixa">—</div></div>
+      <div class="kpi"><div class="l">Sem caixinha</div><div class="v" id="kCaixa">—</div></div>
       <div class="kpi"><div class="l" id="kCxLabel">Caixinha</div><div class="v" id="kCaixinha">—</div></div>
       <div class="kpi"><div class="l" id="kMesLabel">Mês atual</div><div class="v" id="kMes">—</div></div>
     </div>
-    <div class="card" style="margin-top:12px">
-      <h2 style="display:flex;justify-content:space-between;align-items:center">Contribuições mensais
-        <select id="anoResumo" style="width:auto;padding:4px 8px;font-size:13px"></select></h2>
-      <div class="grid-wrap"><table class="mes-grid" id="gridContrib"></table></div>
-      <p class="muted" id="pendentes"></p>
-    </div>
-    <div class="card">
-      <h2 id="cxTitulo">Caixinha</h2>
-      <div id="cxCasais"></div>
-    </div>
-    <div class="card">
-      <h2>Resumo por mês</h2>
-      <div class="grid-wrap"><table id="tabMeses"></table></div>
+    <div class="toolbar"><div class="seg-ano" id="anoResumo"></div></div>
+    <div class="rgrid">
+      <div class="card">
+        <h2>Contribuições mensais <span class="muted" id="contribAno"></span></h2>
+        <div class="grid-wrap"><table class="mes-grid" id="gridContrib"></table></div>
+        <p class="muted" id="pendentes" style="margin-bottom:0"></p>
+      </div>
+      <div class="card">
+        <h2 id="cxTitulo">Caixinha</h2>
+        <div id="cxCasais"></div>
+      </div>
+      <div class="card wide">
+        <h2>Mês a mês <span class="muted" id="anoTotais"></span></h2>
+        <div class="grid-wrap"><table id="tabMeses"></table></div>
+      </div>
     </div>
   </section>
 
   <!-- LANÇAR -->
   <section id="tab-lancar" class="hidden">
-    <div class="card">
-      <h2 id="formTitulo">Novo lançamento</h2>
+    <div class="card form-wrap">
+      <h2 id="formTitulo" class="hidden">Novo lançamento</h2>
       <div class="seg" id="segTipo">
         <button data-t="contribuicao" class="on">Contribuição</button>
         <button data-t="caixinha">Caixinha</button>
         <button data-t="saida">Saída</button>
-        <button data-t="outros">Outra entrada</button>
+        <button data-t="outros">Outros</button>
       </div>
 
       <div id="fCasalBox">
@@ -143,7 +253,7 @@
 
       <label for="fDesc">Descrição</label>
       <input id="fDesc" placeholder="Descrição">
-      <p class="muted" id="fDica" style="margin:6px 0 0"></p>
+      <div class="muted" id="fDica" style="margin:8px 0 0"></div>
 
       <button class="btn full" id="btnSalvar">Salvar lançamento</button>
       <button class="btn full sec hidden" id="btnCancelarEd">Cancelar edição</button>
@@ -152,61 +262,74 @@
 
   <!-- LISTA -->
   <section id="tab-lista" class="hidden">
-    <div class="card">
-      <div class="row">
-        <div><label for="filtroMes">Mês</label><select id="filtroMes"></select></div>
-        <div><label for="filtroTxt">Buscar</label><input id="filtroTxt" placeholder="casal, descrição…"></div>
-      </div>
-    </div>
-    <div class="card" id="listaLanc"></div>
-    <div class="card">
-      <h2>Exportar</h2>
-      <p class="muted" style="margin-top:0">Baixa os lançamentos para abrir no Excel.</p>
-      <div class="row">
-        <button class="btn sec" id="btnXlsx">Excel (.xlsx)</button>
-        <button class="btn sec" id="btnCsv">CSV</button>
+    <div class="lgrid">
+      <div class="card" id="listaLanc"></div>
+      <div class="lside">
+        <div class="card">
+          <h2>Filtrar</h2>
+          <div class="row">
+            <div><label for="filtroAno" style="margin-top:0">Ano</label><select id="filtroAno"></select></div>
+            <div><label for="filtroMes" style="margin-top:0">Mês</label><select id="filtroMes"></select></div>
+          </div>
+          <label for="filtroTxt">Buscar</label><input id="filtroTxt" placeholder="casal, descrição…">
+          <p class="muted" id="filtroTot" style="margin-bottom:0"></p>
+        </div>
+        <div class="card">
+          <h2>Exportar</h2>
+          <p class="muted" style="margin-top:0">Baixa todos os lançamentos para abrir no Excel.</p>
+          <div class="row">
+            <button class="btn sec" id="btnXlsx">Excel</button>
+            <button class="btn sec" id="btnCsv">CSV</button>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
   <!-- CONFIG -->
   <section id="tab-config" class="hidden">
-    <div class="card">
-      <h2>Conexão com o GitHub</h2>
-      <label for="cRepo">Repositório</label>
-      <input id="cRepo" placeholder="usuario/repositorio">
-      <label for="cBranch">Branch</label>
-      <input id="cBranch" placeholder="main">
-      <label for="cToken">Token de acesso (fine-grained)</label>
-      <input id="cToken" type="password" placeholder="github_pat_…" autocomplete="off">
-      <p class="muted">O token fica salvo só neste navegador. Ele precisa de permissão <b>Contents: Read and write</b> apenas neste repositório.</p>
-      <button class="btn full" id="btnConectar">Salvar e conectar</button>
-      <button class="btn full danger" id="btnSair">Esquecer token deste aparelho</button>
-    </div>
-    <div class="card">
-      <h2>Meta da caixinha e C.L por ano</h2>
-      <div id="cfgAnos"></div>
-      <div id="anoForm" style="margin-top:6px">
-        <div class="row">
-          <div><label for="aAno">Ano</label><input id="aAno" inputmode="numeric" maxlength="4" placeholder="2027"></div>
-          <div><label for="aMeta">Meta/casal</label><input id="aMeta" inputmode="decimal" placeholder="0,00"></div>
-          <div><label for="aCl">C.L mensal</label><input id="aCl" inputmode="decimal" placeholder="0,00"></div>
+    <div class="cgrid">
+      <div>
+        <div class="card">
+          <h2>Meta da caixinha e C.L por ano</h2>
+          <div id="cfgAnos"></div>
+          <div id="anoForm" style="margin-top:6px">
+            <div class="row">
+              <div><label for="aAno">Ano</label><input id="aAno" inputmode="numeric" maxlength="4" placeholder="2027"></div>
+              <div><label for="aMeta">Meta/casal</label><input id="aMeta" inputmode="decimal" placeholder="0,00"></div>
+              <div><label for="aCl">C.L mensal</label><input id="aCl" inputmode="decimal" placeholder="0,00"></div>
+            </div>
+            <p class="muted" id="aDica" style="margin:8px 0 0">A caixinha arrecadada num ano é a do ano seguinte (em 2026 arrecada-se a Caixinha 2027).</p>
+            <button class="btn full" id="btnSalvarAno">Salvar ano</button>
+          </div>
         </div>
-        <p class="muted" id="aDica" style="margin:6px 0 0">A caixinha arrecadada num ano é a do ano seguinte (em 2026 arrecada-se a Caixinha 2027).</p>
-        <button class="btn full" id="btnSalvarAno">Salvar ano</button>
+        <div class="card">
+          <h2>Casais da equipe</h2>
+          <div id="cfgCasais"></div>
+          <div class="row" style="margin-top:10px;align-items:flex-end">
+            <div style="flex:3"><label for="nCasal">Novo casal</label><input id="nCasal" placeholder="Ex.: Maria e José"></div>
+            <div style="flex:1"><button class="btn sec" id="btnAddCasal" style="width:100%">Adicionar</button></div>
+          </div>
+          <p class="muted" style="margin-bottom:0">Remover um casal só tira ele das listas; os lançamentos antigos continuam.</p>
+        </div>
       </div>
-    </div>
-    <div class="card">
-      <h2>Casais da equipe</h2>
-      <div id="cfgCasais"></div>
-      <div class="row" style="margin-top:10px;align-items:flex-end">
-        <div style="flex:3"><label for="nCasal">Novo casal</label><input id="nCasal" placeholder="Ex.: Maria e José"></div>
-        <div style="flex:1"><button class="btn sec" id="btnAddCasal" style="width:100%">Adicionar</button></div>
+      <div class="card">
+        <h2>Conexão com o GitHub</h2>
+        <label for="cRepo" style="margin-top:0">Repositório</label>
+        <input id="cRepo" placeholder="usuario/repositorio">
+        <label for="cBranch">Branch</label>
+        <input id="cBranch" placeholder="main">
+        <label for="cToken">Token de acesso (fine-grained)</label>
+        <input id="cToken" type="password" placeholder="github_pat_…" autocomplete="off">
+        <p class="muted">O token fica salvo só neste aparelho. Ele precisa de permissão <b>Contents: Read and write</b> apenas no repositório de dados.</p>
+        <button class="btn full" id="btnConectar">Salvar e conectar</button>
+        <button class="btn full danger" id="btnSair">Esquecer token deste aparelho</button>
       </div>
-      <p class="muted">Remover um casal só tira ele das listas; os lançamentos antigos continuam.</p>
     </div>
   </section>
 </main>
+</div>
+</div>
 
 <div class="modal" id="modal"><div class="card">
   <h2 id="mTitulo">Confirmar</h2>
@@ -369,63 +492,86 @@
 
   // ---------- render ----------
   function renderTudo() {
-    $("titulo").textContent = "Financeiro " + (st.cfg?.equipe || "ENS");
+    $("titulo").textContent = "Financeiro · " + (st.cfg?.equipe || "ENS"); $("brandNome").textContent = st.cfg?.equipe || "Equipe ENS";
     renderResumo(); renderForm(); renderLista(); renderCfg();
   }
 
+  const ehMov = (l) => l.categoria !== "ajuste" && l.categoria !== "saldo_inicial";
+  const curto = (n) => n.replace(/ e /, "/").replace("Ana Maria", "Ana");
+  function casaisDoAno(ano, filtro) {
+    const lst = st.lanc.filter((l) => l.data.startsWith(ano) && l.casal && filtro(l)).map((l) => l.casal);
+    const cfg = casais().map((c) => c.nome);
+    const base = ano >= hoje().slice(0, 4) ? cfg : cfg.filter((n) => lst.includes(n));
+    return [...base, ...[...new Set(lst)].filter((n) => !base.includes(n)).sort()];
+  }
   function renderResumo() {
     const saldo = st.lanc.reduce((s, l) => s + sinal(l), 0);
     const anoAtual = hoje().slice(0, 4), ymAtual = hoje().slice(0, 7);
     const cx = st.lanc.filter((l) => l.tipo === "caixinha" && l.data.startsWith(anoAtual)).reduce((s, l) => s + l.valor, 0);
-    const cxTotal = st.lanc.filter((l) => l.tipo === "caixinha").reduce((s, l) => s + l.valor, 0);
     const mes = st.lanc.filter((l) => l.data.startsWith(ymAtual)).reduce((s, l) => s + sinal(l), 0);
-    const rot = rotCx(anoAtual);
-    $("kSaldo").textContent = brl(saldo); $("kSaldo").className = "v " + cls(saldo);
-    $("kCaixa").textContent = brl(saldo - cxTotal); $("kCaixa").className = "v " + cls(saldo - cxTotal);
-    $("kCxLabel").textContent = rot; $("kCaixinha").textContent = brl(cx);
-    $("kMesLabel").textContent = "Movimento " + MES_AB[Number(ymAtual.slice(5)) - 1];
-    $("kMes").textContent = brl(mes); $("kMes").className = "v " + (mes < 0 ? "neg" : "pos");
+    $("kSaldo").textContent = brl(saldo); $("kSaldo").className = "v";
+    // caixa livre = saldo menos a caixinha guardada no ano (reservada para o ano seguinte)
+    $("kCaixa").textContent = brl(saldo - cx); $("kCaixa").className = "v " + cls(saldo - cx);
+    $("kCxLabel").textContent = rotCx(anoAtual); $("kCaixinha").textContent = brl(cx);
+    $("kMesLabel").textContent = "Mês de " + MES_AB[Number(ymAtual.slice(5)) - 1].toLowerCase();
+    $("kMes").textContent = (mes > 0 ? "+" : "") + brl(mes); $("kMes").className = "v " + (mes < 0 ? "neg" : "pos");
 
-    const sel = $("anoResumo"), cur = sel.value || anoAtual;
     const lista = anos().includes(anoAtual) ? anos() : [anoAtual, ...anos()];
-    sel.innerHTML = lista.map((a) => `<option ${a === cur ? "selected" : ""}>${a}</option>`).join("");
-    const ano = sel.value;
+    if (!st.anoResumo || !lista.includes(st.anoResumo)) st.anoResumo = anoAtual;
+    const ano = st.anoResumo;
+    $("anoResumo").innerHTML = lista.map((a) => `<button data-ano="${a}" class="${a === ano ? "on" : ""}">${a}</button>`).join("");
+    $("contribAno").textContent = ano;
+
     const ultimoMes = ano < anoAtual ? 12 : Number(ymAtual.slice(5));
-    let h = "<tr><th>Casal</th>" + MES_AB.map((m) => `<th>${m}</th>`).join("") + "</tr>";
+    const contribAno = st.lanc.filter((l) => l.categoria === "contribuicao" && l.data.startsWith(ano));
+    const semCasal = contribAno.length && contribAno.every((l) => !l.casal);
     const pend = [];
-    for (const c of casais()) {
-      h += `<tr><td>${esc(c.nome.replace(/ e /, "/").replace("Ana Maria", "Ana"))}</td>`;
-      for (let m = 1; m <= 12; m++) {
-        const ym = `${ano}-${String(m).padStart(2, "0")}`, ok = contribuiu(c.nome, ym);
-        if (!ok && ano === anoAtual && m === ultimoMes) pend.push(c.nome);
-        h += `<td class="${ok ? "ok" : "falta"}">${ok ? "✓" : (m <= ultimoMes ? "·" : "")}</td>`;
+    if (semCasal) {
+      const tot = contribAno.reduce((s, l) => s + l.valor, 0);
+      $("gridContrib").innerHTML = "";
+      $("pendentes").innerHTML = `Em ${ano} as contribuições foram registradas pelo total do mês, sem separar por casal. Total no ano: <b>${brl(tot)}</b>.`;
+    } else {
+      let h = "<tr><th>Casal</th>" + MES_AB.map((m) => `<th>${m}</th>`).join("") + "</tr>";
+      for (const nome of casaisDoAno(ano, (l) => l.categoria === "contribuicao")) {
+        h += `<tr><td>${esc(curto(nome))}</td>`;
+        for (let m = 1; m <= 12; m++) {
+          const ym = `${ano}-${String(m).padStart(2, "0")}`, ok = contribuiu(nome, ym);
+          if (!ok && ano === anoAtual && m === ultimoMes && casais().some((c) => c.nome === nome)) pend.push(nome);
+          h += `<td>${ok ? '<span class="dot ok">✓</span>' : (m <= ultimoMes ? '<span class="falta">•</span>' : "")}</td>`;
+        }
+        h += "</tr>";
       }
-      h += "</tr>";
+      $("gridContrib").innerHTML = h;
+      $("pendentes").textContent = ano === anoAtual ? (pend.length ? `Faltam em ${MESES[ultimoMes - 1].toLowerCase()}: ${pend.join(", ")}.` : `Todos contribuíram em ${MESES[ultimoMes - 1].toLowerCase()}.`) : "";
     }
-    $("gridContrib").innerHTML = h;
-    $("pendentes").textContent = ano === anoAtual ? (pend.length ? `Faltam em ${MESES[ultimoMes - 1]}: ${pend.join(", ")}.` : `Todos contribuíram em ${MESES[ultimoMes - 1]}.`) : "";
 
     const ca = cfgAno(ano), meta = Number(ca.meta_caixinha || 0);
     const cxAno = st.lanc.filter((l) => l.tipo === "caixinha" && l.data.startsWith(ano)).reduce((s, l) => s + l.valor, 0);
-    $("cxTitulo").textContent = `${rotCx(ano)} · arrecadada em ${ano}` + (meta ? ` · meta ${brl(meta)}/casal` : "");
-    $("cxCasais").innerHTML = (!ca.cadastrado ? `<p class="muted" style="margin-top:0">Meta de ${ano} não cadastrada${ca.de ? ` (usando a de ${ca.de})` : ""}. Cadastre em Ajustes.</p>` : "") + casais().map((c) => {
-      const v = st.lanc.filter((l) => l.tipo === "caixinha" && l.casal === c.nome && l.data.startsWith(ano)).reduce((s, l) => s + l.valor, 0);
+    const cxCasais = casaisDoAno(ano, (l) => l.tipo === "caixinha");
+    $("cxTitulo").innerHTML = `${rotCx(ano)} <span class="muted">${meta ? `meta ${brl(meta)}/casal` : `arrecadada em ${ano}`}</span>`;
+    const semCasalCx = st.lanc.filter((l) => l.tipo === "caixinha" && l.data.startsWith(ano) && !l.casal).reduce((s, l) => s + l.valor, 0);
+    $("cxCasais").innerHTML = (!ca.cadastrado && ano >= anoAtual ? `<p class="muted" style="margin-top:0">Meta de ${ano} não cadastrada${ca.de ? ` (usando a de ${ca.de})` : ""}. Cadastre em Ajustes.</p>` : "") + cxCasais.map((nome) => {
+      const v = st.lanc.filter((l) => l.tipo === "caixinha" && l.casal === nome && l.data.startsWith(ano)).reduce((s, l) => s + l.valor, 0);
       const p = meta ? Math.min(100, (v / meta) * 100) : 0;
-      return `<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between"><span>${esc(c.nome)}</span><span class="${v >= meta && meta ? "ok" : ""}">${brl(v)}${meta ? (v >= meta ? " ✓" : ` · faltam ${brl(meta - v)}`) : ""}</span></div>${meta ? `<div class="bar"><i style="width:${p}%"></i></div>` : ""}</div>`;
-    }).join("") + `<div class="muted">Total: <b>${brl(cxAno)}</b>${meta ? ` de ${brl(meta * casais().length)}` : ""}</div>`;
+      return `<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;gap:8px"><span>${esc(nome)}</span><span class="${v >= meta && meta ? "ok" : ""}" style="white-space:nowrap">${brl(v)}${meta ? (v >= meta ? " ✓" : ` <span class="muted">· faltam ${brl(meta - v)}</span>`) : ""}</span></div>${meta ? `<div class="bar"><i style="width:${p}%"></i></div>` : ""}</div>`;
+    }).join("") + (semCasalCx ? `<p class="muted">Sem casal identificado: ${brl(semCasalCx)}</p>` : "") +
+      `<div class="muted">Total arrecadado em ${ano}: <b>${brl(cxAno)}</b>${meta && ano >= anoAtual ? ` de ${brl(meta * casais().length)}` : ""}</div>`;
 
-    // resumo mensal do ano selecionado
     let saldoAcum = st.lanc.filter((l) => l.data < `${ano}-01-01`).reduce((s, l) => s + sinal(l), 0);
+    const ini = saldoAcum; let te = 0, ts = 0;
     let t = '<tr><th>Mês</th><th class="n">Entradas</th><th class="n">Saídas</th><th class="n">Saldo</th></tr>';
     for (let m = 1; m <= 12; m++) {
       const ym = `${ano}-${String(m).padStart(2, "0")}`, ls_ = st.lanc.filter((l) => l.data.startsWith(ym));
       if (!ls_.length) continue;
-      const ent = ls_.filter((l) => l.tipo !== "saida").reduce((s, l) => s + l.valor, 0);
-      const sai = ls_.filter((l) => l.tipo === "saida").reduce((s, l) => s + l.valor, 0);
-      saldoAcum += ent - sai;
-      t += `<tr><td>${MES_AB[m - 1]}</td><td class="n pos">${brl(ent)}</td><td class="n neg">${brl(sai)}</td><td class="n ${cls(saldoAcum)}">${brl(saldoAcum)}</td></tr>`;
+      const ent = ls_.filter((l) => l.tipo !== "saida" && ehMov(l)).reduce((s, l) => s + l.valor, 0);
+      const sai = ls_.filter((l) => l.tipo === "saida" && ehMov(l)).reduce((s, l) => s + l.valor, 0);
+      const aj = ls_.filter((l) => !ehMov(l)).reduce((s, l) => s + sinal(l), 0);
+      saldoAcum += ent - sai + aj; te += ent; ts += sai;
+      t += `<tr><td>${MES_AB[m - 1]}${aj && m === 1 && ini ? ' <span class="tag">ajuste</span>' : ""}</td><td class="n pos">${brl(ent)}</td><td class="n neg">${brl(sai)}</td><td class="n ${cls(saldoAcum)}">${brl(saldoAcum)}</td></tr>`;
     }
+    t += `<tr><th>Total</th><th class="n pos">${brl(te)}</th><th class="n neg">${brl(ts)}</th><th class="n">${brl(saldoAcum)}</th></tr>`;
     $("tabMeses").innerHTML = t;
+    $("anoTotais").textContent = `saldo inicial ${brl(ini)}`;
   }
 
   // ---------- formulário ----------
@@ -473,7 +619,7 @@
   }
   function renderComp() {
     const ops = opcoesComp(); for (const x of st.comp) if (!ops.includes(x)) ops.push(x); ops.sort();
-    $("fComp").innerHTML = ops.map((ym) => `<span class="chip" data-ym="${ym}" style="${st.comp.has(ym) ? "background:var(--acc);color:#fff;border-color:var(--acc)" : ""}">${rotComp(ym)}</span>`).join("");
+    $("fComp").innerHTML = ops.map((ym) => `<span class="chip ${st.comp.has(ym) ? "on" : ""}" data-ym="${ym}">${rotComp(ym)}</span>`).join("");
   }
   function setTipo(t) {
     st.tipo = t;
@@ -533,25 +679,38 @@
   }
 
   // ---------- lista ----------
+  const IC = {
+    e: '<svg class="i" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg>',
+    s: '<svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg>',
+    c: '<svg class="i" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M7 8V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2M3 13h18"/></svg>',
+    a: '<svg class="i" viewBox="0 0 24 24"><path d="M4 12h16M12 4v16" opacity=".4"/><circle cx="12" cy="12" r="8"/></svg>'
+  };
   function renderLista() {
-    const sel = $("filtroMes"), cur = sel.value || hoje().slice(0, 7);
-    const meses = [...new Set(st.lanc.map((l) => l.data.slice(0, 7)))].sort().reverse();
-    sel.innerHTML = '<option value="">Todos</option>' + meses.map((m) => `<option value="${m}" ${m === cur ? "selected" : ""}>${MESES[Number(m.slice(5)) - 1]}/${m.slice(0, 4)}</option>`).join("");
-    const mes = sel.value, txt = $("filtroTxt").value.trim().toLowerCase();
+    const sa = $("filtroAno"), sm = $("filtroMes");
+    const anosL = anos(), curA = sa.dataset.v ?? hoje().slice(0, 4);
+    sa.innerHTML = '<option value="">Todos</option>' + anosL.map((a) => `<option ${a === curA ? "selected" : ""}>${a}</option>`).join("");
+    sa.value = anosL.includes(curA) ? curA : ""; sa.dataset.v = sa.value;
+    const ano = sa.value, curM = sm.dataset.v ?? "";
+    sm.innerHTML = '<option value="">Todos</option>' + MESES.map((m, k) => `<option value="${String(k + 1).padStart(2, "0")}">${m}</option>`).join("");
+    sm.value = curM; sm.disabled = !ano; if (!ano) sm.value = ""; sm.dataset.v = sm.value;
+    const pref = ano ? ano + (sm.value ? "-" + sm.value : "") : "", txt = $("filtroTxt").value.trim().toLowerCase();
     let acum = 0; const saldoApos = new Map();
     for (const l of st.lanc) { acum += sinal(l); saldoApos.set(l.id, acum); }
-    const rows = st.lanc.filter((l) => (!mes || l.data.startsWith(mes)) && (!txt || (l.descricao + " " + l.casal).toLowerCase().includes(txt))).slice().reverse();
-    if (!rows.length) { $("listaLanc").innerHTML = '<p class="muted" style="margin:0">Nenhum lançamento.</p>'; return; }
+    const rows = st.lanc.filter((l) => l.data.startsWith(pref) && (!txt || (l.descricao + " " + l.casal).toLowerCase().includes(txt))).slice().reverse();
+    const te = rows.filter((l) => l.tipo !== "saida" && ehMov(l)).reduce((s, l) => s + l.valor, 0), ts = rows.filter((l) => l.tipo === "saida" && ehMov(l)).reduce((s, l) => s + l.valor, 0);
+    $("filtroTot").innerHTML = `${rows.length} lançamento${rows.length === 1 ? "" : "s"} · <span class="pos">${brl(te)}</span> · <span class="neg">${brl(-ts)}</span>`;
+    if (!rows.length) { $("listaLanc").innerHTML = '<p class="muted" style="margin:0">Nenhum lançamento neste período.</p>'; return; }
     let h = "", mesAtual = "";
     for (const l of rows) {
       const m = l.data.slice(0, 7);
       if (m !== mesAtual) {
         mesAtual = m; const tot = rows.filter((x) => x.data.startsWith(m)).reduce((s, x) => s + sinal(x), 0);
-        h += `<div class="mesh"><span>${MESES[Number(m.slice(5)) - 1]}/${m.slice(0, 4)}</span><span class="${tot < 0 ? "neg" : "pos"}">${brl(tot)}</span></div>`;
+        h += `<div class="mesh"><span>${MESES[Number(m.slice(5)) - 1]} ${m.slice(0, 4)}</span><span class="${tot < 0 ? "neg" : "pos"}">${(tot > 0 ? "+" : "") + brl(tot)}</span></div>`;
       }
-      const v = sinal(l), tag = l.tipo === "caixinha" ? '<span class="tag">caixinha</span>' : "";
-      h += `<div class="lanc"><div><div>${esc(l.descricao)}${tag}</div><div class="d">${fmtData(l.data)} · <button data-ed="${l.id}">editar</button> · <button data-del="${l.id}">excluir</button></div></div>
-            <div class="v ${v < 0 ? "neg" : "pos"}">${brl(v)}<div class="s">saldo ${brl(saldoApos.get(l.id))}</div></div></div>`;
+      const v = sinal(l), k = !ehMov(l) ? "a" : l.tipo === "caixinha" ? "c" : l.tipo === "saida" ? "s" : "e";
+      const tag = l.tipo === "caixinha" ? '<span class="tag">caixinha</span>' : l.categoria === "ajuste" ? '<span class="tag">ajuste</span>' : "";
+      h += `<div class="lanc"><div class="ic ${k}">${IC[k]}</div><div class="tx"><div>${esc(l.descricao)}${tag}</div><div class="d">${fmtData(l.data)} · <button data-ed="${l.id}">editar</button> · <button data-del="${l.id}">excluir</button></div></div>
+            <div class="v ${v < 0 ? "neg" : "pos"}">${(v > 0 ? "+" : "") + brl(v)}<div class="s">saldo ${brl(saldoApos.get(l.id))}</div></div></div>`;
     }
     $("listaLanc").innerHTML = h;
   }
@@ -624,7 +783,8 @@
 
   // ---------- navegação ----------
   function mostrarTab(t) {
-    document.querySelectorAll("nav button").forEach((b) => b.classList.toggle("on", b.dataset.tab === t));
+    document.querySelectorAll("#nav button").forEach((b) => b.classList.toggle("on", b.dataset.tab === t));
+    $("pagina").textContent = { resumo: "Resumo", lancar: st.editId ? "Editar lançamento" : "Novo lançamento", lista: "Lançamentos", config: "Ajustes" }[t];
     document.querySelectorAll("main > section").forEach((s) => s.classList.toggle("hidden", s.id !== "tab-" + t));
     window.scrollTo(0, 0);
   }
@@ -641,10 +801,12 @@
   $("fValor").oninput = () => $("fValor").dataset.auto = "0";
   $("btnSalvar").onclick = salvar;
   $("btnCancelarEd").onclick = () => { limparForm(); mostrarTab("lista"); };
-  $("filtroMes").onchange = renderLista;
+  $("filtroAno").onchange = () => { $("filtroAno").dataset.v = $("filtroAno").value; $("filtroMes").dataset.v = ""; renderLista(); };
+  $("filtroMes").onchange = () => { $("filtroMes").dataset.v = $("filtroMes").value; renderLista(); };
+  window.addEventListener("scroll", () => $("topbar").classList.toggle("scrolled", window.scrollY > 4), { passive: true });
   $("filtroTxt").oninput = renderLista;
   $("listaLanc").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; if (b.dataset.ed) editar(Number(b.dataset.ed)); if (b.dataset.del) excluir(Number(b.dataset.del)); };
-  $("anoResumo").onchange = renderResumo;
+  $("anoResumo").onclick = (e) => { const b = e.target.closest("[data-ano]"); if (b) { st.anoResumo = b.dataset.ano; renderResumo(); } };
   $("btnCsv").onclick = exportarCSV;
   $("btnSalvarAno").onclick = salvarAno;
   $("aAno").oninput = () => { if (/^20\d\d$/.test($("aAno").value.trim())) prepAno($("aAno").value.trim()); };
@@ -652,7 +814,7 @@
   $("btnAddCasal").onclick = addCasal;
   $("cfgCasais").onclick = (e) => { const b = e.target.closest("[data-rmcasal]"); if (b) rmCasal(Number(b.dataset.rmcasal)); };
   $("btnXlsx").onclick = exportarXLSX;
-  $("btnRecarregar").onclick = async () => { if (await carregar()) toast("Dados atualizados"); };
+  $("btnRecarregar").onclick = async () => { const b = $("btnRecarregar"); b.classList.add("spin"); const ok = await carregar(); b.classList.remove("spin"); if (ok) toast("Dados atualizados"); };
   $("btnConectar").onclick = async () => {
     ls.set("repo", $("cRepo").value.trim() || "pascoetto/ens-financeiro"); ls.set("branch", $("cBranch").value.trim() || "main");
     if ($("cToken").value.trim()) ls.set("token", $("cToken").value.trim());
