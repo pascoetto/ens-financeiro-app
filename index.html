@@ -194,6 +194,32 @@
   .user-btn { width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--acc-2); color: var(--acc); font-weight: 700; font-size: 14px; cursor: pointer; }
   .perfil { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--acc-2); color: var(--acc); }
   .perfil.consulta { background: var(--soft); color: var(--muted); }
+  .cfg-menu { padding: 4px 0; overflow: hidden; }
+  .cfg-menu button { display: flex; width: 100%; align-items: center; gap: 12px; padding: 12px 14px; border: 0; background: none; text-align: left; cursor: pointer; color: var(--ink); border-bottom: 1px solid var(--line); }
+  .cfg-menu button:last-child { border-bottom: 0; }
+  .cfg-menu button:active { background: var(--soft); }
+  .cfg-menu .mi { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; flex: none; background: color-mix(in srgb, var(--c) 14%, transparent); color: var(--c); }
+  @media (prefers-color-scheme: dark) { .cfg-menu .mi { background: color-mix(in srgb, var(--c) 30%, transparent); color: color-mix(in srgb, var(--c) 40%, #fff); } }
+  .cfg-menu .mi svg { width: 19px; height: 19px; }
+  .cfg-menu .mtx { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .cfg-menu .mt { font-weight: 600; }
+  .cfg-menu .ms { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cfg-menu .ms:empty { display: none; }
+  .cfg-menu .chev { width: 18px; height: 18px; color: var(--muted); }
+  .cfg-menu .sair .mt { color: var(--neg); }
+  .voltar { display: inline-flex; align-items: center; gap: 2px; border: 0; background: none; color: var(--acc); font-weight: 600; font-size: 15px; padding: 4px 0 12px; cursor: pointer; }
+  .voltar svg { width: 20px; height: 20px; }
+  .cfg:not(.aberto) .cfg-body { display: none; }
+  .cfg.aberto .cfg-side { display: none; }
+  @media (min-width: 900px) {
+    .cfg { display: grid; grid-template-columns: 290px minmax(0, 640px); gap: 18px; align-items: start; }
+    .cfg .cfg-side, .cfg .cfg-body { display: block !important; }
+    .cfg-side { position: sticky; top: 110px; }
+    .voltar { display: none; }
+    .cfg-menu button:hover { background: var(--soft); }
+    .cfg-menu button.on { background: var(--acc-2); }
+    .cfg-menu button.on .mt { color: var(--acc); }
+  }
   body[data-perfil="consulta"] .so-admin { display: none !important; }
   code { font-size: 12px; background: var(--soft); padding: 1px 5px; border-radius: 6px; }
 </style>
@@ -355,13 +381,27 @@
 
   <!-- CONFIG -->
   <section id="tab-config" class="hidden">
-    <div class="cgrid">
-      <div>
+    <div class="cfg" id="cfg">
+      <div class="cfg-side">
+        <div class="card cfg-menu" id="cfgMenu">
+      <button data-sub="conta"><span class="mi" style="--c:#1f4e79"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><span class="mtx"><span class="mt">Minha conta</span><span class="ms" id="ms-conta"></span></span><svg class="i chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button data-sub="usuarios" class="so-admin"><span class="mi" style="--c:#7b4bb7"><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></span><span class="mtx"><span class="mt">Usuários</span><span class="ms" id="ms-usuarios"></span></span><svg class="i chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button data-sub="anos"><span class="mi" style="--c:#16794a"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span><span class="mtx"><span class="mt">Metas e C.L por ano</span><span class="ms" id="ms-anos"></span></span><svg class="i chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button data-sub="casais"><span class="mi" style="--c:#c26a12"><svg class="i" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span><span class="mtx"><span class="mt">Casais da equipe</span><span class="ms" id="ms-casais"></span></span><svg class="i chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+        </div>
+        <div class="card cfg-menu">
+      <button id="cfgInstalar" class="hidden"><span class="mi" style="--c:#4a6578"><svg class="i" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M12 7v7M9 11l3 3 3-3"/></svg></span><span class="mtx"><span class="mt">Instalar o app</span><span class="ms">Ícone na tela inicial do celular</span></span><svg class="i chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button id="btnSair" class="sair"><span class="mi" style="--c:#b3261e"><svg class="i" viewBox="0 0 24 24"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11"/></svg></span><span class="mtx"><span class="mt">Sair</span></span></button>
+        </div>
+      </div>
+      <div class="cfg-body">
+        <button class="voltar" id="cfgVoltar" type="button"><svg class="i" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Ajustes</button>
+        <div class="sub" id="sub-conta">
         <div class="card">
-          <h2>Minha conta</h2>
-          <div id="contaInfo" style="margin-bottom:10px"></div>
-          <details>
-            <summary>Trocar senha</summary>
+          <div id="contaInfo"></div>
+        </div>
+        <div class="card">
+          <h2>Trocar senha</h2>
             <form id="fMinhaSenha" autocomplete="off">
               <label for="mAtual" style="margin-top:0">Senha atual</label><input id="mAtual" type="password" autocomplete="current-password">
               <label for="mNova">Nova senha</label><input id="mNova" type="password" autocomplete="new-password">
@@ -369,9 +409,9 @@
               <button class="btn full" type="submit">Salvar nova senha</button>
               <p class="msg" id="mMsg"></p>
             </form>
-          </details>
-          <details class="so-admin">
-            <summary>Atualizar meu token do GitHub</summary>
+        </div>
+        <div class="card so-admin">
+          <h2>Token do GitHub</h2>
             <form id="fMeuToken" autocomplete="off">
               <p class="muted" style="margin-top:0">Use quando o token vencer ou for regenerado.</p>
               <label for="kAtual" style="margin-top:0">Senha atual</label><input id="kAtual" type="password" autocomplete="current-password">
@@ -379,9 +419,9 @@
               <button class="btn full" type="submit">Salvar token</button>
               <p class="msg" id="kMsg"></p>
             </form>
-          </details>
-          <button class="btn full danger" id="btnSair">Sair</button>
+                  </div>
         </div>
+        <div class="sub hidden" id="sub-usuarios">
         <div class="card so-admin">
           <h2>Usuários</h2>
           <div id="listaUsuarios"></div>
@@ -404,8 +444,8 @@
             <p class="msg" id="uMsg"></p>
           </form>
         </div>
-      </div>
-      <div>
+        </div>
+        <div class="sub hidden" id="sub-anos">
         <div class="card">
           <h2>Meta da caixinha e C.L por ano</h2>
           <div id="cfgAnos"></div>
@@ -419,6 +459,8 @@
             <button class="btn full" id="btnSalvarAno">Salvar ano</button>
           </div>
         </div>
+        </div>
+        <div class="sub hidden" id="sub-casais">
         <div class="card">
           <h2>Casais da equipe</h2>
           <div id="cfgCasais"></div>
@@ -427,6 +469,7 @@
             <div style="flex:1"><button class="btn sec" id="btnAddCasal" style="width:100%">Adicionar</button></div>
           </div>
           <p class="muted" style="margin-bottom:0">Remover um casal só tira ele das listas; os lançamentos antigos continuam.</p>
+        </div>
         </div>
       </div>
     </div>
@@ -604,7 +647,7 @@
   // ---------- render ----------
   function renderTudo() {
     $("titulo").textContent = "Financeiro · " + (st.cfg?.equipe || "ENS"); $("brandNome").textContent = st.cfg?.equipe || "Equipe ENS";
-    renderResumo(); renderForm(); renderLista(); renderCfg();
+    renderResumo(); renderForm(); renderLista(); renderCfg(); renderCfgMenu();
   }
 
   const ehMov = (l) => l.categoria !== "ajuste" && l.categoria !== "saldo_inicial";
@@ -1031,9 +1074,11 @@
     if (!st.sess) return;
     $("contaInfo").innerHTML = `<div style="font-weight:600">${esc(st.sess.nome || st.sess.usuario)}</div><div class="muted">${esc(st.sess.usuario)} · <span class="perfil ${st.sess.perfil}">${nomePerfil(st.sess.perfil)}</span></div>`;
     if (st.sess.perfil === "admin") renderUsuarios();
+    renderCfgMenu();
   }
   async function renderUsuarios() {
     try { await lerUsuarios(st.sess.tokens.acesso); } catch { $("listaUsuarios").innerHTML = '<p class="muted">Não foi possível ler a lista de usuários.</p>'; return; }
+    renderCfgMenu();
     $("listaUsuarios").innerHTML = st.usuarios.map((u) => `<div class="lanc" style="align-items:center"><div class="tx"><div>${esc(u.nome || u.usuario)} <span class="perfil ${u.perfil}">${nomePerfil(u.perfil)}</span></div><div class="d">${esc(u.usuario)}${u.trocar_senha ? " · aguardando primeiro acesso" : ""}</div></div>` +
       (u.usuario === st.sess.usuario ? '<span class="muted">você</span>' : `<div style="display:flex;gap:6px"><button class="chip" data-redef="${esc(u.usuario)}">redefinir</button><button class="chip" data-rmuser="${esc(u.usuario)}">excluir</button></div>`) + "</div>").join("");
   }
@@ -1113,13 +1158,40 @@
     } catch (er) { msg.textContent = "Não foi possível salvar: " + (er.det || er.message); }
   };
   $("btnSair").onclick = async () => { if (await confirmar("Sair?", "Você vai precisar entrar de novo com usuário e senha.")) sair(); };
-  $("btnUser").onclick = () => mostrarTab("config");
+  $("btnUser").onclick = () => { mostrarTab("config"); abrirSub("conta"); };
+  const SUBS = { conta: "Minha conta", usuarios: "Usuários", anos: "Metas e C.L", casais: "Casais" };
+  const telaLarga = () => window.matchMedia("(min-width: 900px)").matches;
+  function abrirSub(n, empilhar = true) {
+    if (n === "usuarios" && st.sess?.perfil !== "admin") n = "conta";
+    st.sub = n;
+    for (const k of Object.keys(SUBS)) $("sub-" + k).classList.toggle("hidden", k !== n);
+    document.querySelectorAll("#cfgMenu button").forEach((b) => b.classList.toggle("on", b.dataset.sub === n));
+    $("cfg").classList.add("aberto"); $("pagina").textContent = SUBS[n];
+    if (empilhar && !telaLarga()) { try { history.pushState({ sub: n }, ""); } catch {} }
+    window.scrollTo(0, 0);
+  }
+  function fecharSub() { st.sub = null; $("cfg").classList.remove("aberto"); $("pagina").textContent = "Ajustes"; document.querySelectorAll("#cfgMenu button").forEach((b) => b.classList.remove("on")); }
+  $("cfgMenu").onclick = (e) => { const b = e.target.closest("[data-sub]"); if (b) abrirSub(b.dataset.sub); };
+  $("cfgVoltar").onclick = () => { if (history.state?.sub) history.back(); else fecharSub(); };
+  window.addEventListener("popstate", () => { if (st.sub && !telaLarga()) fecharSub(); });
+  $("cfgInstalar").onclick = () => $("btnInstalar").click();
+  function renderCfgMenu() {
+    if (!st.sess) return;
+    $("ms-conta").textContent = `${st.sess.nome || st.sess.usuario} · ${st.sess.perfil === "admin" ? "Administrador" : "Somente consulta"}`;
+    if (st.usuarios) $("ms-usuarios").textContent = `${st.usuarios.length} usuário${st.usuarios.length === 1 ? "" : "s"}`;
+    if (st.cfg) {
+      const a = hoje().slice(0, 4), ca = cfgAno(a);
+      $("ms-anos").textContent = `${a}: meta ${brl(Number(ca.meta_caixinha || 0))} · C.L ${brl(Number(ca.cl || 0))}`;
+      $("ms-casais").textContent = `${casais().length} casa${casais().length === 1 ? "l" : "is"}`;
+    }
+  }
 
   // ---------- navegação ----------
   function mostrarTab(t) {
     if (t === "lancar" && st.sess?.perfil !== "admin") t = "resumo";
     document.querySelectorAll("#nav button").forEach((b) => b.classList.toggle("on", b.dataset.tab === t));
     $("pagina").textContent = { resumo: "Resumo", lancar: st.editId ? "Editar lançamento" : "Novo lançamento", lista: "Lançamentos", config: "Ajustes" }[t];
+    if (t === "config") { if (telaLarga()) abrirSub(st.sub || "conta", false); else fecharSub(); }
     document.querySelectorAll("main > section").forEach((s) => s.classList.toggle("hidden", s.id !== "tab-" + t));
     window.scrollTo(0, 0);
   }
@@ -1159,7 +1231,7 @@
   const ehAndroid = /Android/i.test(ua);
   const instalado = () => window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
   let promptInstalar = null;
-  function atualizarBotaoInstalar() { $("btnInstalar").classList.toggle("hidden", instalado() || !(ehIOS || ehAndroid || promptInstalar)); }
+  function atualizarBotaoInstalar() { const esc_ = instalado() || !(ehIOS || ehAndroid || promptInstalar); $("btnInstalar").classList.toggle("hidden", esc_); $("cfgInstalar").classList.toggle("hidden", esc_); }
   window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); promptInstalar = e; atualizarBotaoInstalar(); });
   window.addEventListener("appinstalled", () => { promptInstalar = null; atualizarBotaoInstalar(); toast("App instalado ✓"); });
   function mostrarPassos(intro, passos) {
