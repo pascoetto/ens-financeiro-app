@@ -162,7 +162,7 @@
   #toast { position: fixed; left: 50%; bottom: calc(var(--nav-h) + var(--sab) + 14px); transform: translateX(-50%) translateY(8px); background: var(--ink); color: var(--bg); padding: 11px 16px; border-radius: 14px; font-size: 14px; font-weight: 600; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; max-width: 90vw; z-index: 50; }
   #toast.show { opacity: 1; transform: translateX(-50%); }
   @media (min-width: 900px) { #toast { bottom: 24px; left: calc(50% + var(--side-w) / 2); } }
-  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: flex-end; justify-content: center; z-index: 60; padding: 16px 16px calc(16px + var(--sab)); }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: flex-end; justify-content: center; z-index: 90; padding: 16px 16px calc(16px + var(--sab)); }
   .modal.show { display: flex; }
   .modal .card { max-width: 420px; width: 100%; margin: 0; }
   @media (min-width: 600px) { .modal { align-items: center; } }
@@ -174,6 +174,14 @@
   .auth-card .logo { width: 56px; height: 56px; border-radius: 16px; background: var(--acc); color: var(--acc-ink); display: grid; place-items: center; font-weight: 800; margin: 0 auto 14px; }
   .auth-card h1 { text-align: center; font-size: 22px; margin: 0; letter-spacing: -.02em; }
   .auth-card .sub { text-align: center; color: var(--muted); font-size: 14px; margin: 4px 0 20px; }
+  .install-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; margin-top: 4px; padding: 13px 16px; border-radius: 14px;
+    border: 1px dashed color-mix(in srgb, var(--acc) 45%, transparent); background: color-mix(in srgb, var(--card) 70%, transparent); color: var(--acc); font-weight: 650; cursor: pointer; }
+  .install-btn svg { width: 20px; height: 20px; }
+  .passos { margin: 4px 0 0; padding: 0; list-style: none; counter-reset: p; }
+  .passos li { counter-increment: p; display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .passos li:last-child { border-bottom: 0; }
+  .passos li::before { content: counter(p); flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--acc-2); color: var(--acc); font-weight: 700; font-size: 13px; display: grid; place-items: center; }
+  .passos svg { width: 18px; height: 18px; vertical-align: -3px; stroke: var(--acc); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .check { display: flex; align-items: center; gap: 8px; margin-top: 14px; font-weight: 500; color: var(--ink); }
   .check input { width: 18px; height: 18px; -webkit-appearance: auto; appearance: auto; }
   .msg { min-height: 20px; margin: 10px 0 0; font-size: 13px; color: var(--neg); font-weight: 600; }
@@ -222,6 +230,10 @@
       <button class="btn full sec" id="btnTrocaVoltar" type="button">Voltar</button>
       <p class="msg" id="tMsg"></p>
     </form>
+    <button class="install-btn hidden" id="btnInstalar" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M12 7v7M9 11l3 3 3-3M10 18.5h4"/></svg>
+      Instalar o app no celular
+    </button>
   </div>
 </div>
 
@@ -423,6 +435,12 @@
 </div>
 </div>
 
+<div class="modal" id="mInstalar"><div class="card">
+  <h2 style="margin-bottom:6px">Instalar o app</h2>
+  <p class="muted" style="margin-top:0" id="iIntro"></p>
+  <ol class="passos" id="iPassos"></ol>
+  <button class="btn full" id="iFechar" type="button">Entendi</button>
+</div></div>
 <div class="modal" id="modal"><div class="card">
   <h2 id="mTitulo">Confirmar</h2>
   <p id="mTexto"></p>
@@ -1132,6 +1150,49 @@
   $("cfgCasais").onclick = (e) => { const b = e.target.closest("[data-rmcasal]"); if (b) rmCasal(Number(b.dataset.rmcasal)); };
   $("btnXlsx").onclick = exportarXLSX;
   $("btnRecarregar").onclick = async () => { const b = $("btnRecarregar"); b.classList.add("spin"); const ok = await carregar(); b.classList.remove("spin"); if (ok) toast("Dados atualizados"); };
+  // ---------- instalar o app ----------
+  const SVG_SHARE = '<svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
+  const SVG_ADD = '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/></svg>';
+  const SVG_MENU = '<svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>';
+  const ua = navigator.userAgent || "";
+  const ehIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const ehAndroid = /Android/i.test(ua);
+  const instalado = () => window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  let promptInstalar = null;
+  function atualizarBotaoInstalar() { $("btnInstalar").classList.toggle("hidden", instalado() || !(ehIOS || ehAndroid || promptInstalar)); }
+  window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); promptInstalar = e; atualizarBotaoInstalar(); });
+  window.addEventListener("appinstalled", () => { promptInstalar = null; atualizarBotaoInstalar(); toast("App instalado ✓"); });
+  function mostrarPassos(intro, passos) {
+    $("iIntro").textContent = intro;
+    $("iPassos").innerHTML = passos.map((p) => `<li><div>${p}</div></li>`).join("");
+    $("mInstalar").classList.add("show");
+  }
+  $("iFechar").onclick = () => $("mInstalar").classList.remove("show");
+  $("mInstalar").onclick = (e) => { if (e.target.id === "mInstalar") $("mInstalar").classList.remove("show"); };
+  $("btnInstalar").onclick = async () => {
+    if (promptInstalar) {
+      promptInstalar.prompt();
+      try { const r = await promptInstalar.userChoice; if (r.outcome === "accepted") toast("Instalando…"); } catch {}
+      promptInstalar = null; atualizarBotaoInstalar(); return;
+    }
+    if (ehIOS) {
+      const safari = !/CriOS|FxiOS|EdgiOS/.test(ua);
+      mostrarPassos("O app fica na tela inicial do iPhone ou iPad e abre em tela cheia.", [
+        safari ? `Toque no botão <b>Compartilhar</b> ${SVG_SHARE} na barra do Safari (embaixo ou no topo da tela).` : `Toque no botão <b>Compartilhar</b> ${SVG_SHARE} na barra de endereço. Se não aparecer, abra esta página no <b>Safari</b>.`,
+        `Role a lista e toque em <b>Adicionar à Tela de Início</b> ${SVG_ADD}.`,
+        "Confirme em <b>Adicionar</b>. O ícone <b>Financeiro ENS</b> aparece na tela inicial."
+      ]);
+    } else {
+      mostrarPassos("O app fica na tela inicial do celular e abre em tela cheia.", [
+        `Toque no menu ${SVG_MENU} do navegador (no Chrome, no canto de cima).`,
+        "Toque em <b>Instalar app</b> ou <b>Adicionar à tela inicial</b>.",
+        "Confirme em <b>Instalar</b>. O ícone <b>Financeiro ENS</b> aparece na tela inicial."
+      ]);
+    }
+  };
+  atualizarBotaoInstalar();
+  if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
+
   // ---------- início ----------
   ls.del("token"); ls.del("repo"); ls.del("branch");
   const sess = lerSessao();
