@@ -118,6 +118,7 @@
   .grid-wrap { overflow-x: auto; margin: 0 -4px; }
   .mes-grid td, .mes-grid th { text-align: center; padding: 7px 3px; font-size: 13px; }
   .mes-grid td:first-child, .mes-grid th:first-child { text-align: left; white-space: nowrap; position: sticky; left: 0; background: var(--card); padding-right: 8px; }
+  .mes-grid tr.tot td { font-weight: 700; font-size: 12px; border-top: 2px solid var(--line); white-space: nowrap; padding-left: 5px; padding-right: 5px; }
   .ok { color: var(--pos); font-weight: 700; } .falta { color: var(--line); }
   .dot { display: inline-block; width: 18px; height: 18px; border-radius: 6px; line-height: 18px; font-size: 11px; }
   .dot.ok { background: color-mix(in srgb, var(--pos) 16%, transparent); color: var(--pos); }
@@ -615,27 +616,40 @@
     $("contribAno").textContent = ano;
 
     const ultimoMes = ano < anoAtual ? 12 : Number(ymAtual.slice(5));
+    // valor de contribuição por casal e mês de referência (lançamento de vários meses é dividido igualmente)
+    const porMes = {}, totMes = Array(13).fill(0);
+    for (const l of st.lanc) {
+      if (l.categoria !== "contribuicao") continue;
+      const comps = (l.competencia || "").split(";").filter(Boolean);
+      const lista_ = comps.length ? comps : [l.data.slice(0, 7)];
+      for (const ym of lista_) {
+        if (!ym.startsWith(ano)) continue;
+        const m = Number(ym.slice(5)), v = l.valor / lista_.length, k = l.casal || "";
+        porMes[k] = porMes[k] || Array(13).fill(0); porMes[k][m] += v; totMes[m] += v;
+      }
+    }
+    const nCurto = (n) => n ? n.toLocaleString("pt-BR", { minimumFractionDigits: Math.round(n * 100) % 100 ? 2 : 0, maximumFractionDigits: 2 }) : "";
+    const somaAno = (arr) => arr.reduce((x, y) => x + y, 0);
     const contribAno = st.lanc.filter((l) => l.categoria === "contribuicao" && l.data.startsWith(ano));
     const semCasal = contribAno.length && contribAno.every((l) => !l.casal);
     const pend = [];
-    if (semCasal) {
-      const tot = contribAno.reduce((s, l) => s + l.valor, 0);
-      $("gridContrib").innerHTML = "";
-      $("pendentes").innerHTML = `Em ${ano} as contribuições foram registradas pelo total do mês, sem separar por casal. Total no ano: <b>${brl(tot)}</b>.`;
-    } else {
-      let h = "<tr><th>Casal</th>" + MES_AB.map((m) => `<th>${m}</th>`).join("") + "</tr>";
+    let h = "<tr><th>Casal</th>" + MES_AB.map((m) => `<th>${m}</th>`).join("") + '<th class="n">Ano</th></tr>';
+    if (!semCasal) {
       for (const nome of casaisDoAno(ano, (l) => l.categoria === "contribuicao")) {
         h += `<tr><td>${esc(curto(nome))}</td>`;
         for (let m = 1; m <= 12; m++) {
-          const ym = `${ano}-${String(m).padStart(2, "0")}`, ok = contribuiu(nome, ym);
+          const ym = `${ano}-${String(m).padStart(2, "0")}`, ok = contribuiu(nome, ym), v = porMes[nome]?.[m] || 0;
           if (!ok && ano === anoAtual && m === ultimoMes && casais().some((c) => c.nome === nome)) pend.push(nome);
-          h += `<td>${ok ? '<span class="dot ok">✓</span>' : (m <= ultimoMes ? '<span class="falta">•</span>' : "")}</td>`;
+          h += `<td>${ok ? `<span class="dot ok" title="${brl(v)}">✓</span>` : (m <= ultimoMes ? '<span class="falta">•</span>' : "")}</td>`;
         }
-        h += "</tr>";
+        h += `<td class="n muted">${nCurto(somaAno(porMes[nome] || []))}</td></tr>`;
       }
-      $("gridContrib").innerHTML = h;
-      $("pendentes").textContent = ano === anoAtual ? (pend.length ? `Faltam em ${MESES[ultimoMes - 1].toLowerCase()}: ${pend.join(", ")}.` : `Todos contribuíram em ${MESES[ultimoMes - 1].toLowerCase()}.`) : "";
     }
+    if (porMes[""] && !semCasal) h += `<tr><td class="muted">Sem casal</td>${MES_AB.map((_, k) => `<td class="muted">${nCurto(porMes[""][k + 1])}</td>`).join("")}<td class="n muted">${nCurto(somaAno(porMes[""]))}</td></tr>`;
+    h += `<tr class="tot"><td>Total (R$)</td>${MES_AB.map((_, k) => `<td>${nCurto(totMes[k + 1])}</td>`).join("")}<td class="n">${nCurto(somaAno(totMes))}</td></tr>`;
+    $("gridContrib").innerHTML = h;
+    if (semCasal) $("pendentes").innerHTML = `Em ${ano} as contribuições foram registradas pelo total do mês, sem separar por casal. Total no ano: <b>${brl(somaAno(totMes))}</b>.`;
+    else $("pendentes").textContent = ano === anoAtual ? (pend.length ? `Faltam em ${MESES[ultimoMes - 1].toLowerCase()}: ${pend.join(", ")}.` : `Todos contribuíram em ${MESES[ultimoMes - 1].toLowerCase()}.`) : "";
 
     const ca = cfgAno(ano), meta = Number(ca.meta_caixinha || 0);
     const cxAno = st.lanc.filter((l) => l.tipo === "caixinha" && l.data.startsWith(ano)).reduce((s, l) => s + l.valor, 0);
