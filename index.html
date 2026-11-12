@@ -372,7 +372,7 @@
       <div id="fCatBox" class="hidden">
         <label for="fCat">Tipo de saída</label>
         <select id="fCat">
-          <option value="cl">C.L (mensal)</option>
+          <option value="cl">CL (mensal)</option>
           <option value="setor">Contribuição Setor / Boleto Equipe 08</option>
           <option value="despesa">Despesa da equipe</option>
         </select>
@@ -425,7 +425,7 @@
         <div class="card cfg-menu" id="cfgMenu">
       <button data-sub="conta"><span class="mi" style="--c:#1f4e79"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><span class="mtx"><span class="mt">Minha conta</span><span class="ms" id="ms-conta"></span></span><svg class="i chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
       <button data-sub="usuarios" class="so-admin"><span class="mi" style="--c:#7b4bb7"><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></span><span class="mtx"><span class="mt">Usuários</span><span class="ms" id="ms-usuarios"></span></span><svg class="i chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
-      <button data-sub="anos"><span class="mi" style="--c:#16794a"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span><span class="mtx"><span class="mt">Metas e C.L por ano</span><span class="ms" id="ms-anos"></span></span><svg class="i chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button data-sub="anos"><span class="mi" style="--c:#16794a"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span><span class="mtx"><span class="mt">Metas e CL por ano</span><span class="ms" id="ms-anos"></span></span><svg class="i chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
       <button data-sub="casais"><span class="mi" style="--c:#c26a12"><svg class="i" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span><span class="mtx"><span class="mt">Casais da equipe</span><span class="ms" id="ms-casais"></span></span><svg class="i chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
         </div>
         <div class="card cfg-menu">
@@ -486,13 +486,13 @@
         </div>
         <div class="sub hidden" id="sub-anos">
         <div class="card">
-          <h2>Meta da caixinha e C.L por ano</h2>
+          <h2>Meta da caixinha e CL por ano</h2>
           <div id="cfgAnos"></div>
           <div id="anoForm" class="so-admin" style="margin-top:6px">
             <div class="row">
               <div><label for="aAno">Ano</label><input id="aAno" inputmode="numeric" maxlength="4" placeholder="2027"></div>
               <div><label for="aMeta">Meta/casal</label><input id="aMeta" inputmode="decimal" placeholder="0,00"></div>
-              <div><label for="aCl">C.L mensal</label><input id="aCl" inputmode="decimal" placeholder="0,00"></div>
+              <div><label for="aCl">CL mensal</label><input id="aCl" inputmode="decimal" placeholder="0,00"></div>
             </div>
             <p class="muted" id="aDica" style="margin:8px 0 0">A caixinha arrecadada num ano é a do ano seguinte (em 2026 arrecada-se a Caixinha 2027).</p>
             <button class="btn full" id="btnSalvarAno">Salvar ano</button>
@@ -739,7 +739,7 @@
     $("despAnos").innerHTML = tots.map(([a, v]) => `<div class="anobar ${a === ano ? "on" : ""}"><span>${a}</span><div class="bar"><i style="width:${(v / mx) * 100}%"></i></div><span>${brl(v)}</span></div>`).join("");
     const cl = st.lanc.filter((l) => l.tipo === "saida" && l.categoria === "cl" && l.data.startsWith(ano)).reduce((x, l) => x + l.valor, 0);
     const se = st.lanc.filter((l) => l.tipo === "saida" && l.categoria === "setor" && l.data.startsWith(ano)).reduce((x, l) => x + l.valor, 0);
-    $("despOutras").textContent = (cl || se) ? `Fora das despesas: C.L ${brl(cl)} e Setor/Boleto ${brl(se)} em ${ano}.` : "";
+    $("despOutras").textContent = (cl || se) ? `Fora das despesas: CL ${brl(cl)} e Setor/Boleto ${brl(se)} em ${ano}.` : "";
   }
 
   function renderResumo() {
@@ -845,7 +845,7 @@
     if (t === "caixinha") return `Caixinha - ${casal}`;
     if (t === "saida") {
       const d = $("fData").value || hoje(), mes = `${MESES[Number(d.slice(5, 7)) - 1]}/${d.slice(0, 4)}`;
-      if ($("fCat").value === "cl") return `C.L - ${mes}`;
+      if ($("fCat").value === "cl") return `CL - ${mes}`;
       if ($("fCat").value === "setor") return `Boleto Contr. Equipe.08 - ${mes}`;
     }
     return null;
@@ -866,7 +866,7 @@
     }
     if (st.tipo === "saida" && $("fCat").value === "cl") {
       const a = ($("fData").value || hoje()).slice(0, 4), ca = cfgAno(a);
-      if (!ca.cadastrado) dica = `⚠ Valor do C.L de ${a} não cadastrado${ca.de ? ` (usando o de ${ca.de})` : ""}. Cadastre em Ajustes.`;
+      if (!ca.cadastrado) dica = `⚠ Valor do CL de ${a} não cadastrado${ca.de ? ` (usando o de ${ca.de})` : ""}. Cadastre em Ajustes.`;
     }
     $("fDica").innerHTML = dica;
   }
@@ -963,7 +963,7 @@
       }
       const v = sinal(l), k = !ehMov(l) ? "a" : l.tipo === "caixinha" ? "c" : l.tipo === "saida" ? "s" : "e";
       const tag = l.tipo === "caixinha" ? '<span class="tag">caixinha</span>' : l.categoria === "ajuste" ? '<span class="tag">ajuste</span>'
-        : l.tipo === "saida" ? `<span class="tag">${{ cl: "C.L", setor: "Setor", despesa: "Despesa" }[l.categoria] || esc(l.categoria)}</span>` : "";
+        : l.tipo === "saida" ? `<span class="tag">${{ cl: "CL", setor: "Setor", despesa: "Despesa" }[l.categoria] || esc(l.categoria)}</span>` : "";
       h += `<div class="lanc"><div class="ic ${k}">${IC[k]}</div><div class="tx"><div>${esc(l.descricao)}${tag}</div><div class="d">${fmtData(l.data)}<span class="so-admin"> · <button data-ed="${l.id}">editar</button> · <button data-del="${l.id}">excluir</button></span></div></div>
             <div class="v ${v < 0 ? "neg" : "pos"}">${(v > 0 ? "+" : "") + brl(v)}<div class="s">saldo ${brl(saldoApos.get(l.id))}</div></div></div>`;
     }
@@ -1005,7 +1005,7 @@
   function renderCfg() {
     if (!st.cfg) return;
     const anosCfg = Object.keys(st.cfg.anos || {}).sort().reverse();
-    $("cfgAnos").innerHTML = anosCfg.length ? '<table><tr><th>Ano</th><th class="n">Meta caixinha</th><th class="n">C.L mensal</th><th></th></tr>' +
+    $("cfgAnos").innerHTML = anosCfg.length ? '<table><tr><th>Ano</th><th class="n">Meta caixinha</th><th class="n">CL mensal</th><th></th></tr>' +
       anosCfg.map((a) => { const v = st.cfg.anos[a]; return `<tr><td>${a}<div class="muted" style="font-size:11px">${rotCx(a)}</div></td><td class="n">${brl(Number(v.meta_caixinha || 0))}</td><td class="n">${brl(Number(v.cl || 0))}</td><td class="n"><button class="chip so-admin" data-edano="${a}">editar</button></td></tr>`; }).join("") + "</table>"
       : '<p class="muted" style="margin:0">Nenhum ano cadastrado.</p>';
     if (!$("aAno").value) prepAno(hoje().slice(0, 4));
@@ -1023,7 +1023,7 @@
     const a = $("aAno").value.trim(), meta = parseValor($("aMeta").value || "0"), cl = parseValor($("aCl").value || "0");
     if (!/^20\d\d$/.test(a)) return toast("Informe um ano válido (ex.: 2027).");
     if (!(meta >= 0) || !(cl >= 0)) return toast("Valores inválidos.");
-    if (await gravarCfg((c) => { c.anos = c.anos || {}; c.anos[a] = { meta_caixinha: meta, cl }; return c; }, `Ajusta valores de ${a}: meta caixinha ${brlReal(meta)}, C.L ${brlReal(cl)}`)) { toast(`${a} salvo ✓`); prepAno(a); }
+    if (await gravarCfg((c) => { c.anos = c.anos || {}; c.anos[a] = { meta_caixinha: meta, cl }; return c; }, `Ajusta valores de ${a}: meta caixinha ${brlReal(meta)}, CL ${brlReal(cl)}`)) { toast(`${a} salvo ✓`); prepAno(a); }
   }
   async function addCasal() {
     const n = $("nCasal").value.trim().replace(/\s+/g, " ");
@@ -1257,7 +1257,7 @@
   }
   $("btnOlho").onclick = () => { st.oculto = !st.oculto; aplicarOlho(); };
   aplicarOlho();
-  const SUBS = { conta: "Minha conta", usuarios: "Usuários", anos: "Metas e C.L", casais: "Casais" };
+  const SUBS = { conta: "Minha conta", usuarios: "Usuários", anos: "Metas e CL", casais: "Casais" };
   const telaLarga = () => window.matchMedia("(min-width: 900px)").matches;
   function abrirSub(n, empilhar = true) {
     if (n === "usuarios" && st.sess?.perfil !== "admin") n = "conta";
@@ -1279,7 +1279,7 @@
     if (st.usuarios) $("ms-usuarios").textContent = `${st.usuarios.length} usuário${st.usuarios.length === 1 ? "" : "s"}`;
     if (st.cfg) {
       const a = hoje().slice(0, 4), ca = cfgAno(a);
-      $("ms-anos").textContent = `${a}: meta ${brl(Number(ca.meta_caixinha || 0))} · C.L ${brl(Number(ca.cl || 0))}`;
+      $("ms-anos").textContent = `${a}: meta ${brl(Number(ca.meta_caixinha || 0))} · CL ${brl(Number(ca.cl || 0))}`;
       $("ms-casais").textContent = `${casais().length} casa${casais().length === 1 ? "l" : "is"}`;
     }
   }
@@ -1300,8 +1300,8 @@
   $("fComp").onclick = (e) => { const c = e.target.closest(".chip"); if (!c) return; const ym = c.dataset.ym; st.comp.has(ym) ? st.comp.delete(ym) : st.comp.add(ym); renderComp(); atualizarAuto(false); };
   $("fCasal").onchange = () => atualizarAuto(false);
   $("fDica").onclick = (e) => { const c = e.target.closest("#usarUltimo"); if (c) { $("fValor").value = Number(c.dataset.v).toLocaleString("pt-BR", { minimumFractionDigits: 2 }); $("fValor").dataset.auto = "0"; } };
-  // descrição padrão de C.L / Setor acompanha o tipo de saída, também ao editar
-  const DESC_PADRAO = /^(C\.L|Contribui[cç][aã]o Setor|Boleto Contr\. ?Equipe\.? ?08)\s*-/i;
+  // descrição padrão de CL / Setor acompanha o tipo de saída, também ao editar
+  const DESC_PADRAO = /^(C\.?L|Contribui[cç][aã]o Setor|Boleto Contr\. ?Equipe\.? ?08)\s*-/i;
   $("fCat").onchange = () => {
     const d = $("fDesc").value.trim();
     if ($("fCat").value !== "despesa" && DESC_PADRAO.test(d)) { $("fDesc").value = descAuto(); $("fDesc").dataset.auto = "1"; }
