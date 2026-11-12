@@ -241,6 +241,8 @@
     .cfg-menu button.on { background: var(--acc-2); }
     .cfg-menu button.on .mt { color: var(--acc); }
   }
+  body.oculto .bar > i { width: 0 !important; }
+  body.oculto .pos, body.oculto .neg, body.oculto .desp-tot .v { color: inherit !important; }
   body[data-perfil="consulta"] .so-admin { display: none !important; }
   code { font-size: 12px; background: var(--soft); padding: 1px 5px; border-radius: 6px; }
 </style>
@@ -297,6 +299,7 @@
 <div class="content">
 <header class="topbar" id="topbar">
   <div class="t"><div class="sub" id="titulo">Financeiro ENS</div><h1 id="pagina">Resumo</h1></div>
+  <button class="iconbtn" id="btnOlho" title="Mostrar valores" aria-label="Mostrar valores" aria-pressed="false"></button>
   <button class="user-btn" id="btnUser" title="Minha conta" aria-label="Minha conta"></button>
   <button class="iconbtn" id="btnRecarregar" title="Atualizar dados" aria-label="Atualizar dados"><svg class="i" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
 </header>
@@ -537,7 +540,7 @@
   const MES_AB = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
   const $ = (id) => document.getElementById(id);
 
-  const st = { lanc: [], sha: null, cfg: null, tipo: "contribuicao", comp: new Set(), editId: null, salvando: false };
+  const st = { oculto: true, lanc: [], sha: null, cfg: null, tipo: "contribuicao", comp: new Set(), editId: null, salvando: false };
 
   // ---------- armazenamento local ----------
   const ls = {
@@ -549,7 +552,9 @@
   const conf = () => ({ repo: DADOS, branch: "main", token: st.sess?.tokens?.dados || "" });
 
   // ---------- util ----------
-  const brl = (n) => (n < 0 ? "−" : "") + "R$ " + Math.abs(n).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const brlReal = (n) => (n < 0 ? "−" : "") + "R$ " + Math.abs(n).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  // com o "olho" fechado, todo valor na tela vira R$ ••••• (os registros gravados usam brlReal)
+  const brl = (n) => st.oculto ? "R$ •••••" : brlReal(n);
   const cls = (n) => n < 0 ? "neg" : "";
   const parseValor = (s) => { s = String(s).trim().replace(/[R$\s]/g, ""); if (s.includes(",")) s = s.replace(/\./g, "").replace(",", "."); const n = Number(s); return isFinite(n) ? Math.round(n * 100) / 100 : NaN; };
   const fmtData = (iso) => { const [y, m, d] = iso.split("-"); return `${d}/${m}/${y}`; };
@@ -711,7 +716,7 @@
     $("despAno").textContent = ano + (parcial ? ` · até ${MES_AB[ultimoMes - 1].toLowerCase()}` : "");
     $("despTotal").textContent = brl(tot);
     const ant = String(Number(ano) - 1), totAnt = despesasDo(ant).reduce((x, l) => x + l.valor, 0);
-    $("despComp").textContent = totAnt ? `${ant}: ${brl(totAnt)} (${tot >= totAnt ? "+" : "−"}${Math.abs(Math.round((tot / totAnt - 1) * 100))}%)` : "";
+    $("despComp").textContent = totAnt ? `${ant}: ${brl(totAnt)} ${st.oculto ? "" : ` (${tot >= totAnt ? "+" : "−"}${Math.abs(Math.round((tot / totAnt - 1) * 100))}%)`}` : "";
     const g = {};
     for (const l of ds) { const k = grupoDe(l.descricao); (g[k] = g[k] || []).push(l); }
     const ordem = Object.entries(g).map(([k, ls]) => [k, ls, ls.reduce((x, l) => x + l.valor, 0)]).sort((a, b) => b[2] - a[2]);
@@ -768,7 +773,7 @@
         porMes[k] = porMes[k] || Array(13).fill(0); porMes[k][m] += v; totMes[m] += v;
       }
     }
-    const nCurto = (n) => n ? n.toLocaleString("pt-BR", { minimumFractionDigits: Math.round(n * 100) % 100 ? 2 : 0, maximumFractionDigits: 2 }) : "";
+    const nCurto = (n) => n && st.oculto ? "•••" : n ? n.toLocaleString("pt-BR", { minimumFractionDigits: Math.round(n * 100) % 100 ? 2 : 0, maximumFractionDigits: 2 }) : "";
     const somaAno = (arr) => arr.reduce((x, y) => x + y, 0);
     const contribAno = st.lanc.filter((l) => l.categoria === "contribuicao" && l.data.startsWith(ano));
     const semCasal = contribAno.length && contribAno.every((l) => !l.casal);
@@ -923,7 +928,7 @@
       if (editId) { const i = rows.findIndex((r) => r.id === editId); if (i >= 0) rows[i] = { ...rows[i], ...reg }; else throw new Error("lançamento não encontrado"); }
       else rows.push({ id: rows.reduce((m, r) => Math.max(m, r.id), 0) + 1, ...reg });
       return rows;
-    }, (editId ? "Edita: " : "Lança: ") + `${desc} (${brl(t === "saida" ? -valor : valor)})`);
+    }, (editId ? "Edita: " : "Lança: ") + `${desc} (${brlReal(t === "saida" ? -valor : valor)})`);
     if (ok) { toast(editId ? "Alteração salva ✓" : "Lançamento salvo ✓"); limparForm(); if (editId) mostrarTab("lista"); }
   }
 
@@ -966,8 +971,8 @@
   async function excluir(id) {
     if (st.sess?.perfil !== "admin") return;
     const l = st.lanc.find((x) => x.id === id); if (!l) return;
-    if (!(await confirmar("Excluir lançamento?", `${l.descricao} — ${brl(sinal(l))} em ${fmtData(l.data)}`))) return;
-    if (await gravar((rows) => rows.filter((r) => r.id !== id), `Exclui: ${l.descricao} (${brl(sinal(l))})`)) toast("Lançamento excluído");
+    if (!(await confirmar("Excluir lançamento?", `${l.descricao} — ${brlReal(sinal(l))} em ${fmtData(l.data)}`))) return;
+    if (await gravar((rows) => rows.filter((r) => r.id !== id), `Exclui: ${l.descricao} (${brlReal(sinal(l))})`)) toast("Lançamento excluído");
   }
 
   // ---------- exportar ----------
@@ -1017,7 +1022,7 @@
     const a = $("aAno").value.trim(), meta = parseValor($("aMeta").value || "0"), cl = parseValor($("aCl").value || "0");
     if (!/^20\d\d$/.test(a)) return toast("Informe um ano válido (ex.: 2027).");
     if (!(meta >= 0) || !(cl >= 0)) return toast("Valores inválidos.");
-    if (await gravarCfg((c) => { c.anos = c.anos || {}; c.anos[a] = { meta_caixinha: meta, cl }; return c; }, `Ajusta valores de ${a}: meta caixinha ${brl(meta)}, C.L ${brl(cl)}`)) { toast(`${a} salvo ✓`); prepAno(a); }
+    if (await gravarCfg((c) => { c.anos = c.anos || {}; c.anos[a] = { meta_caixinha: meta, cl }; return c; }, `Ajusta valores de ${a}: meta caixinha ${brlReal(meta)}, C.L ${brlReal(cl)}`)) { toast(`${a} salvo ✓`); prepAno(a); }
   }
   async function addCasal() {
     const n = $("nCasal").value.trim().replace(/\s+/g, " ");
@@ -1240,6 +1245,17 @@
   };
   $("btnSair").onclick = async () => { if (await confirmar("Sair?", "Você vai precisar entrar de novo com usuário e senha.")) sair(); };
   $("btnUser").onclick = () => { mostrarTab("config"); abrirSub("conta"); };
+  // olho: começa sempre com os valores ocultos ao abrir o app
+  const OLHO_ABERTO = '<svg class="i" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const OLHO_FECHADO = '<svg class="i" viewBox="0 0 24 24"><path d="M10.6 5.1A10.7 10.7 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-2.9 3.8M6.6 6.6C3.7 8.5 2 12 2 12s3.6 7 10 7a9.9 9.9 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2M3 3l18 18"/></svg>';
+  function aplicarOlho() {
+    const b = $("btnOlho"); b.innerHTML = st.oculto ? OLHO_FECHADO : OLHO_ABERTO;
+    b.title = b.ariaLabel = st.oculto ? "Mostrar valores" : "Ocultar valores"; b.setAttribute("aria-pressed", String(!st.oculto));
+    document.body.classList.toggle("oculto", st.oculto);
+    if (st.cfg) { renderResumo(); renderLista(); renderCfg(); renderCfgMenu(); if (!$("tab-lancar").classList.contains("hidden")) atualizarAuto(false); }
+  }
+  $("btnOlho").onclick = () => { st.oculto = !st.oculto; aplicarOlho(); };
+  aplicarOlho();
   const SUBS = { conta: "Minha conta", usuarios: "Usuários", anos: "Metas e C.L", casais: "Casais" };
   const telaLarga = () => window.matchMedia("(min-width: 900px)").matches;
   function abrirSub(n, empilhar = true) {
