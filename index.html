@@ -962,7 +962,8 @@
         h += `<div class="mesh"><span>${MESES[Number(m.slice(5)) - 1]} ${m.slice(0, 4)}</span><span class="${tot < 0 ? "neg" : "pos"}">${(tot > 0 ? "+" : "") + brl(tot)}</span></div>`;
       }
       const v = sinal(l), k = !ehMov(l) ? "a" : l.tipo === "caixinha" ? "c" : l.tipo === "saida" ? "s" : "e";
-      const tag = l.tipo === "caixinha" ? '<span class="tag">caixinha</span>' : l.categoria === "ajuste" ? '<span class="tag">ajuste</span>' : "";
+      const tag = l.tipo === "caixinha" ? '<span class="tag">caixinha</span>' : l.categoria === "ajuste" ? '<span class="tag">ajuste</span>'
+        : l.tipo === "saida" ? `<span class="tag">${{ cl: "C.L", setor: "Setor", despesa: "Despesa" }[l.categoria] || esc(l.categoria)}</span>` : "";
       h += `<div class="lanc"><div class="ic ${k}">${IC[k]}</div><div class="tx"><div>${esc(l.descricao)}${tag}</div><div class="d">${fmtData(l.data)}<span class="so-admin"> · <button data-ed="${l.id}">editar</button> · <button data-del="${l.id}">excluir</button></span></div></div>
             <div class="v ${v < 0 ? "neg" : "pos"}">${(v > 0 ? "+" : "") + brl(v)}<div class="s">saldo ${brl(saldoApos.get(l.id))}</div></div></div>`;
     }
@@ -1299,7 +1300,12 @@
   $("fComp").onclick = (e) => { const c = e.target.closest(".chip"); if (!c) return; const ym = c.dataset.ym; st.comp.has(ym) ? st.comp.delete(ym) : st.comp.add(ym); renderComp(); atualizarAuto(false); };
   $("fCasal").onchange = () => atualizarAuto(false);
   $("fDica").onclick = (e) => { const c = e.target.closest("#usarUltimo"); if (c) { $("fValor").value = Number(c.dataset.v).toLocaleString("pt-BR", { minimumFractionDigits: 2 }); $("fValor").dataset.auto = "0"; } };
-  $("fCat").onchange = () => { if ($("fCat").value === "despesa") { if ($("fDesc").dataset.auto === "1") $("fDesc").value = ""; if ($("fValor").dataset.auto === "1") $("fValor").value = ""; } atualizarAuto(false); };
+  // descrição padrão de C.L / Setor acompanha o tipo de saída, também ao editar
+  const DESC_PADRAO = /^(C\.L|Contribui[cç][aã]o Setor|Boleto Contr\. ?Equipe\.? ?08)\s*-/i;
+  $("fCat").onchange = () => {
+    const d = $("fDesc").value.trim();
+    if ($("fCat").value !== "despesa" && DESC_PADRAO.test(d)) { $("fDesc").value = descAuto(); $("fDesc").dataset.auto = "1"; }
+    if ($("fCat").value === "despesa") { if ($("fDesc").dataset.auto === "1") $("fDesc").value = ""; if ($("fValor").dataset.auto === "1") $("fValor").value = ""; } atualizarAuto(false); };
   $("fData").onchange = () => { renderComp(); atualizarAuto(false); };
   $("fDesc").oninput = () => $("fDesc").dataset.auto = "0";
   $("fValor").oninput = () => $("fValor").dataset.auto = "0";
