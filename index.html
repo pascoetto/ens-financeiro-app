@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Financeiro ENS">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-64.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-180.png">
 <title>Financeiro ENS</title>
 <style>
@@ -66,7 +66,7 @@
   @media (min-width: 900px) {
     .side { top: 0; bottom: 0; left: 0; width: var(--side-w); background: var(--card); border-right: 1px solid var(--line); padding: 22px 14px; display: flex; flex-direction: column; gap: 18px; }
     .brand { display: flex; align-items: center; gap: 10px; padding: 0 8px; }
-    .brand .logo { width: 36px; height: 36px; border-radius: 10px; background: var(--acc); color: var(--acc-ink); display: grid; place-items: center; font-weight: 800; font-size: 14px; }
+    .brand .logo { width: 40px; height: 40px; border-radius: 11px; display: block; flex: none; }
     .brand b { display: block; font-size: 15px; } .brand span { font-size: 12px; color: var(--muted); }
     .nav { position: static; flex-direction: column; justify-content: flex-start; height: auto; padding: 0; background: none; border: 0; backdrop-filter: none; -webkit-backdrop-filter: none; gap: 4px; }
     .nav button { flex: none; flex-direction: row; justify-content: flex-start; gap: 12px; font-size: 14px; padding: 10px 12px; border-radius: 12px; }
@@ -192,7 +192,7 @@
   .auth { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: calc(20px + var(--sat)) 20px calc(20px + var(--sab));
     background: radial-gradient(1200px 600px at 50% -10%, color-mix(in srgb, var(--acc) 22%, var(--bg)), var(--bg)); overflow-y: auto; }
   .auth-card { width: 100%; max-width: 380px; }
-  .auth-card .logo { width: 56px; height: 56px; border-radius: 16px; background: var(--acc); color: var(--acc-ink); display: grid; place-items: center; font-weight: 800; margin: 0 auto 14px; }
+  .auth-card .logo { width: 84px; height: 84px; border-radius: 22px; display: block; margin: 0 auto 14px; box-shadow: 0 8px 24px rgba(16,24,40,.18); }
   .auth-card h1 { text-align: center; font-size: 22px; margin: 0; letter-spacing: -.02em; }
   .auth-card .sub { text-align: center; color: var(--muted); font-size: 14px; margin: 4px 0 20px; }
   .install-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; margin-top: 4px; padding: 13px 16px; border-radius: 14px;
@@ -250,7 +250,7 @@
 <body>
 <div class="auth" id="auth">
   <div class="auth-card">
-    <div class="logo">ENS</div>
+    <img class="logo" src="logo-512.png" alt="Financeiro ENS">
     <h1>Financeiro ENS</h1>
     <p class="sub" id="authSub">Entre com seu usuário</p>
     <form class="card" id="fLogin" autocomplete="on">
@@ -288,7 +288,7 @@
 
 <div class="app">
 <aside class="side">
-  <div class="brand"><div class="logo">ENS</div><div><b id="brandNome">Equipe ENS</b><span>Financeiro</span></div></div>
+  <div class="brand"><img class="logo" src="icon-192.png" alt=""><div><b id="brandNome">Equipe ENS</b><span>Financeiro</span></div></div>
   <nav class="nav" id="nav">
     <button data-tab="resumo" class="on"><span class="pill"><svg class="i" viewBox="0 0 24 24"><path d="M3 12l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg></span><span>Resumo</span></button>
     <button data-tab="lista"><span class="pill"><svg class="i" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r=".8"/><circle cx="3.5" cy="12" r=".8"/><circle cx="3.5" cy="18" r=".8"/></svg></span><span>Lançamentos</span></button>
@@ -752,7 +752,7 @@
     $("kCaixa").textContent = brl(saldo - cx); $("kCaixa").className = "v " + cls(saldo - cx);
     $("kCxLabel").textContent = rotCx(anoAtual); $("kCaixinha").textContent = brl(cx);
     $("kMesLabel").textContent = "Mês de " + MES_AB[Number(ymAtual.slice(5)) - 1].toLowerCase();
-    $("kMes").textContent = (mes > 0 ? "+" : "") + brl(mes); $("kMes").className = "v " + (mes < 0 ? "neg" : "pos");
+    $("kMes").textContent = (mes > 0 && !st.oculto ? "+" : "") + brl(mes); $("kMes").className = "v " + (mes < 0 ? "neg" : "pos");
 
     const lista = anos().includes(anoAtual) ? anos() : [anoAtual, ...anos()];
     if (!st.anoResumo || !lista.includes(st.anoResumo)) st.anoResumo = anoAtual;
